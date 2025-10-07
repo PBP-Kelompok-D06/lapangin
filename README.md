@@ -2,11 +2,11 @@
 ---
 
 ## i. Nama Anggota Kelompok 
--Kenzie Nibras Tradezqi (2406414776)
--Saikhah Ummu Anja Amalia (2406436045)
--Syifa Anabella (2406417922)
--Zibeon Jonriano Wisnumoerti (2406355634)
--Faishal Khoiriansyah Wicaksono (2406436335)
+- Kenzie Nibras Tradezqi (2406414776)
+- Saikhah Ummu Anja Amalia (2406436045)
+- Syifa Anabella (2406417922)
+- Zibeon Jonriano Wisnumoerti (2406355634)
+- Faishal Khoiriansyah Wicaksono (2406436335)
 
 ## ii. Deskripsi Aplikasi 
 Lapangin, website ini hadir dari frustasi nyata kami sebagai mahasiswa yang aktif dalam melakukan olahraga khususnya olahraga futsal, basket, dan badminton. Kami tahu betul bagaimana sulitnya menyeimbangkan antara jadwal kuliah yang padat dan kebutuhan untuk berolahraga.
