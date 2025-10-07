@@ -136,5 +136,5 @@ Akses Fitur & Modul:
 - Bisa mengelola (edit/hapus) komunitas yang sudah ada.
 
 ## vi. Tautan deployment PWS dan link design
-Link Deployment PWS : https://zibeon-jonriano-lapangin.pbp.cs.ui.ac.id/
-Link Design Figma : https://www.figma.com/design/tns2TMUBqT8nJTY6pSLh3S/Lapangin?node-id=0-1&t=2XItc6nUPHshY1KH-1
+- Link Deployment PWS : https://zibeon-jonriano-lapangin.pbp.cs.ui.ac.id/
+- Link Design Figma : https://www.figma.com/design/tns2TMUBqT8nJTY6pSLh3S/Lapangin?node-id=0-1&t=2XItc6nUPHshY1KH-1
