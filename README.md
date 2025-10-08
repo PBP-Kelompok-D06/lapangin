@@ -80,14 +80,14 @@ Template: card/page komunitas dengan tombol “Join Group” (direct ke link eks
 Filter: Guest hanya bisa melihat daftar komunitas, join hanya setelah login.
 
 
-6. Modul Admin Dashboard 
+6. Modul User Admin and Role Management 
 Deskripsi:
     Halaman khusus Admin untuk mengelola booking, ulasan, galeri, dan komunitas.
 Implementasi:
 Model: memanfaatkan existing models (Booking, Review, Galeri, Komunitas).
 Views: dashboard ringkasan (jumlah booking, rating rata-rata, komunitas aktif).
-Template: tabel & grafik sederhana dengan Tailwind.
-
+Template: Admin dashboard, card/page komunitas, card/page lapangan, create_community, create_field.
+Filter : hanya role Admin yang dapat mengakses page ini
 
 ## iv. Sumber initial dataset kategori utama produk
 https://drive.google.com/file/d/1eK_QtY82Bna3GwvQcrdlPG-tcmi6Ijmy/view?usp=drive_link
