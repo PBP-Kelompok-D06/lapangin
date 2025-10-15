@@ -58,18 +58,18 @@ def show_booking_page(request):
         'date_list': date_list,
         'slots_by_date': slots_by_date,
         'today': date.today(),
+        'show_navbar': True,
     }
     
     return render(request, 'booking.html', context)
 
 
 # 2. create_booking: Memproses permintaan booking dari AJAX (Form Input Wajib)
-@csrf_exempt # Digunakan untuk mempermudah AJAX POST saat development (HATI-HATI di production)
-@login_required # Filter Informasi/Login Wajib! Memastikan user terautentikasi
+@csrf_exempt 
+@login_required 
 def create_booking(request):
     if request.method == 'POST':
         if not request.user.is_authenticated:
-            # Wajib: Implementasi Filter Informasi (Login)
             return JsonResponse({'message': 'Anda harus login untuk booking.'}, status=403)
         
         try:
@@ -78,20 +78,24 @@ def create_booking(request):
             
             slot = get_object_or_404(SlotTersedia, pk=slot_id)
             
-            # CEK KETERSEDIAAN (Filter Informasi: Tidak bisa booking slot yang sudah di-booking)
+            # CEK KETERSEDIAAN
             if not slot.is_available:
                 return JsonResponse({'message': 'Slot ini sudah dibooking oleh orang lain.'}, status=400)
             
-            # TODO: Tambahkan check apakah user sudah punya booking yang statusnya pending
+            # --- Perbaikan Wajib: Cegah Double Booking Pending ---
+            # User tidak boleh punya dua booking 'PENDING' untuk slot yang sama
+            if Booking.objects.filter(user=request.user, slot=slot, status_pembayaran='PENDING').exists():
+                return JsonResponse({'message': 'Anda sudah memiliki booking pending untuk slot ini.'}, status=400)
+            # ----------------------------------------------------
             
-            # 1. Ubah status Slot menjadi 'BOOKED'
-            slot.is_available = False
-            slot.save()
+            # *** LOGIC ERROR DIHAPUS: JANGAN UBAH slot.is_available DI SINI ***
+            # slot.is_available = False 
+            # slot.save() 
             
-            # 2. Hitung total_bayar
+            # Hitung total pembayaran
             total_bayar = slot.lapangan.harga_per_jam
             
-            # 3. Buat objek Booking baru
+            # Buat objek Booking baru (dengan status PENDING)
             booking = Booking.objects.create(
                 user=request.user,
                 slot=slot,
@@ -100,20 +104,21 @@ def create_booking(request):
                 status_pembayaran='PENDING' 
             )
             
-            # Kunci: Mengembalikan ID Booking yang baru dibuat ke client
+            # Kembalikan respons sukses
             return JsonResponse({
                 'success': True, 
                 'booking_id': booking.id, 
                 'message': 'Booking berhasil dibuat. Lanjut ke pembayaran.'
             }, status=200)
-            
+
         except SlotTersedia.DoesNotExist:
             return JsonResponse({'message': 'Slot tidak valid.'}, status=404)
+        
         except Exception as e:
+            # Jika ada error database lain, laporkan
             return JsonResponse({'message': str(e)}, status=500)
-            
-    return JsonResponse({'message': 'Metode tidak diizinkan.'}, status=405)
 
+    return JsonResponse({'message': 'Metode tidak diizinkan.'}, status=405)
 
 # 3. show_payment_page: Menampilkan instruksi pembayaran
 @login_required # Filter Informasi/Login Wajib!

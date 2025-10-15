@@ -35,9 +35,9 @@
                 
                 {# Filter Dropdown Lapangan #}
                 <div class="flex-grow">
-                    <label for="lapangan_id_filter" class="block text-sm font-medium text-gray-700">Pilih Lapangan</label>
+                    <label for="lapangan_id_filter" class="block text-sm font-medium text-gray-700 mb-4">Pilih Lapangan</label>
                     <select name="lapangan_id" id="lapangan_id_filter" onchange="this.form.submit()" 
-                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-primary focus:ring-primary focus:border-primary rounded-md">
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:ring-gray-300 focus:border-gray-300 rounded-md">
                         {% for lapangan in all_lapangan %}
                             <option value="{{ lapangan.pk }}" {% if lapangan == lapangan_terpilih %}selected{% endif %}>
                                 {{ lapangan.nama_lapangan }} ({{ lapangan.jenis_olahraga }})
@@ -48,17 +48,17 @@
 
                 {# Filter Input Tanggal #}
                 <div class="flex-grow">
-                    <label for="date_filter" class="block text-sm font-medium text-gray-700">Pilih Tanggal Booking:</label>
+                    <label for="date_filter" class="block text-sm font-medium text-gray-700 mb-4">Pilih Tanggal Booking:</label>
                     <input type="date" name="date" id="date_filter" value="{{ filter_date_str }}" 
                            min="{{ today|date:'Y-m-d' }}" 
                            onchange="this.form.submit()"
-                           class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-primary focus:border-primary rounded-md">
+                           class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:ring-gray-300 focus:border-gray-300 rounded-md">
                 </div>
             </form>
             
             {% if lapangan_terpilih %}
-            <p class="text-xl font-bold text-primary mt-3">
-                Harga/Jam: Rp {{ lapangan_terpilih.harga_per_jam|floatformat:0 }}
+            <p class="text-2xl font-bold text-primary mt-4">
+                <span class="text-sm">Harga/Jam:</span> Rp {{ lapangan_terpilih.harga_per_jam|floatformat:0 }}
             </p>
             {% endif %}
         </header>
@@ -131,7 +131,7 @@
                 <button id="btn-lanjut-bayar" disabled
                         class="px-8 py-3 bg-primary text-white font-bold rounded-lg shadow-xl 
                                disabled:opacity-50 transition duration-300">
-                    Lanjut Pembayaran <i class="fas fa-arrow-right mr-2"></i>
+                    Lanjut Pembayaran
                 </button>
             </div>
             <div id="message-area" class="text-center text-sm mt-2"></div>
@@ -139,6 +139,28 @@
 
     </div>
 </div>
+
+
+<!-- Modal Login Diperlukan -->
+<div id="loginModal" 
+     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[100]">
+  <div class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">Login Diperlukan</h2>
+    <p class="text-gray-600 mb-6">Anda harus login terlebih dahulu untuk melanjutkan ke pembayaran.</p>
+    <div class="flex justify-center gap-4">
+      <button id="btnBatalLogin" 
+              class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">
+        Batal
+      </button>
+      <a id="btnKeLogin" 
+         href="{% url 'authbooking:login' %}?next={% url 'booking:show_booking_page' %}"
+         class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-[#4D5833]">
+        Login Sekarang
+      </a>
+    </div>
+  </div>
+</div>
+
 {% endblock content %}
 
 {# -------------------------------------------------------- #}
@@ -146,19 +168,19 @@
 {# -------------------------------------------------------- #}
 {% block extra_script %}
 <script>
+document.addEventListener('DOMContentLoaded', () => {
     let selectedSlotId = null;
     const btnBayar = document.getElementById('btn-lanjut-bayar');
     const slotCards = document.querySelectorAll('.slot-card');
     const messageArea = document.getElementById('message-area');
+    const modal = document.getElementById('loginModal');
+    const btnBatal = document.getElementById('btnBatalLogin');
 
     // 1. Logic Pemilihan Slot
     slotCards.forEach(card => {
         card.addEventListener('click', () => {
             if (card.dataset.available === 'true') {
-                // Hapus seleksi sebelumnya
                 document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('selected', 'border-primary', 'bg-green-50'));
-                
-                // Tandai card yang dipilih (style Tailwind)
                 card.classList.add('selected', 'border-primary', 'bg-green-50');
                 selectedSlotId = card.dataset.slotId;
                 btnBayar.disabled = false;
@@ -169,14 +191,13 @@
         });
     });
 
-    // 2. Logika Tombol Lanjut Pembayaran (AJAX Wajib)
+    // 2. Tombol Lanjut Pembayaran
     btnBayar.addEventListener('click', async function() {
         if (!selectedSlotId) {
             messageArea.innerHTML = '<span class="text-red-500">Pilih slot terlebih dahulu.</span>';
             return;
         }
 
-        // Nonaktifkan tombol saat proses
         btnBayar.disabled = true;
         btnBayar.textContent = 'Memproses Booking...';
         messageArea.innerHTML = '<span class="text-primary">Harap tunggu...</span>';
@@ -184,24 +205,29 @@
         try {
             const response = await fetch("{% url 'booking:create_booking' %}", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Gunakan @csrf_exempt di views.py untuk development
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ slot_id: selectedSlotId })
             });
 
+            // 🧩 Deteksi: kalau Django redirect ke login (HTML)
+            const contentType = response.headers.get("content-type") || "";
+            if (contentType.includes("text/html")) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                btnBayar.disabled = false;
+                btnBayar.textContent = 'Lanjut Pembayaran';
+                messageArea.innerHTML = '';
+                return;
+            }
+
+
             const result = await response.json();
 
-            if (response.ok) {
-                const bookingId = result.booking_id;
+            if (response.ok && result.success) {
                 messageArea.innerHTML = '<span class="text-green-600">Booking berhasil!</span>';
                 setTimeout(() => {
-                    // Redirect ke URL pembayaran
-                    window.location.href = `{% url 'booking:show_payment_page' 0 %}`.replace('0', bookingId);
+                    window.location.href = `{% url 'booking:show_payment_page' 0 %}`.replace('0', result.booking_id);
                 }, 1000);
-            } else if (response.status === 403) {
-                throw new Error('Login Required');
             } else {
                 throw new Error(result.message || "Gagal membuat booking.");
             }
@@ -209,12 +235,15 @@
         } catch (error) {
             btnBayar.disabled = false;
             btnBayar.textContent = 'Lanjut Pembayaran';
-            if (error.message === 'Login Required') {
-                messageArea.innerHTML = '<span class="text-red-500">Anda harus login untuk booking.</span>';
-            } else {
-                messageArea.innerHTML = `<span class="text-red-500">${error.message}</span>`;
-            }
+            messageArea.innerHTML = `<span class="text-red-500">${error.message}</span>`;
         }
     });
+
+    // 3. Tutup modal
+    btnBatal.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    });
+});
 </script>
 {% endblock extra_script %}

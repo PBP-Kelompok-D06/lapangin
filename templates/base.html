@@ -28,8 +28,11 @@
 
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen">
-    
-    {% include 'navbar.html' %}
+
+    {% if show_navbar %}
+        {% include 'navbar.html' %}
+    {% endif %}
+
 
     <main class="flex-grow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,7 +41,9 @@
         </div>
     </main>
 
-    {% include 'footer.html' %}
+    {% if show_navbar %}
+        {% include 'footer.html' %}
+    {% endif %}
 
     {% block extra_script %}{% endblock extra_script %}
 

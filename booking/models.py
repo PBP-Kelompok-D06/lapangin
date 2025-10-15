@@ -2,17 +2,30 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+from authbooking.models import Profile # <-- WAJIB: Import Model Profile Anda
+
 
 # 1. Model untuk Lapangan (Data Statis dari CSV)
 class Lapangan(models.Model):
+    # --- PENAMBAHAN FIELD PENGELOLA DENGAN RELASI CASCADE ---
+    pengelola = models.ForeignKey(
+        Profile, 
+        on_delete=models.CASCADE, # <--- JIKA PROFILE ADMIN DIHAPUS, LAPANGAN AKAN IKUT TERHAPUS
+        related_name='lapangan_dikelola',
+        limit_choices_to={'role': 'ADMIN'}, # Hanya Profile dengan Role 'ADMIN' yang bisa memilih
+        null=True, 
+        blank=True
+    )
+    # --------------------------------------------------------
+
     # Kolom dari CSV:
     nama_lapangan = models.CharField(max_length=100, unique=True)
     jenis_olahraga = models.CharField(max_length=50)
     lokasi = models.CharField(max_length=100)
     harga_per_jam = models.DecimalField(max_digits=10, decimal_places=0)
-    fasilitas = models.TextField(default='-') # Menggunakan TextField untuk list fasilitas
-    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00) # Untuk menyimpan rating desimal
-    jumlah_ulasan = models.IntegerField(default=0) # Untuk menyimpan jumlah ulasan
+    fasilitas = models.TextField(default='-') 
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00) 
+    jumlah_ulasan = models.IntegerField(default=0) 
 
     def __str__(self):
         return f'{self.nama_lapangan} ({self.jenis_olahraga})'
