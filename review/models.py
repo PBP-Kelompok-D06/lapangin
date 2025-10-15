@@ -1,13 +1,12 @@
 from django.db import models
-from django.contrib.auth.models import User
-from booking.models import Field
+from authbooking.models import Profile
+from booking.models import Lapangan
 
 class Review (models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    field = models.ForeignKey(Field, on_delete=models.CASCADE)
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    field = models.ForeignKey(Lapangan, on_delete=models.CASCADE)
     rating = models.IntegerField()
-    comment = models.TextField()
-    
+    content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

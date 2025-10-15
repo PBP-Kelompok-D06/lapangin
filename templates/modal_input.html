@@ -1,0 +1,72 @@
+
+<div id="review-modal"
+     style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 999;">
+  <div style="background: white; border-radius: 12px; padding: 24px; width: 400px; position: relative;">
+
+    <h2 style="font-family: Montserrat; font-size: 20px; font-weight: 600; color: #4D5833; margin-bottom: 16px;">
+      Tambah Ulasan
+    </h2>
+
+    <form id="form-review">
+      <label for="rating" style="display: block; margin-bottom: 8px;">Beri Rating:</label>
+      <div id="star-rating" style="display: flex; gap: 8px; margin-bottom: 16px;">
+        {% for i in "12345" %}
+          <span class="star" data-value="{{ forloop.counter }}" style="font-size: 24px; cursor: pointer;">☆</span>
+        {% endfor %}
+      </div>
+
+      <label for="content">Ulasan:</label>
+      <textarea id="content" name="content"
+                style="width: 100%; height: 80px; border: 1px solid #ccc; border-radius: 6px; padding: 8px; margin-top: 4px;"></textarea>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+        <button type="button" onclick="closeModal()" style="background: #ccc; padding: 8px 12px; border-radius: 6px;">Batal</button>
+        <button type="submit" style="background: #B8D279; padding: 8px 12px; border-radius: 6px;">Kirim</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let selectedRating = 0;
+
+document.querySelectorAll('.star').forEach(star => {
+  star.addEventListener('click', () => {
+    selectedRating = star.dataset.value;
+    document.querySelectorAll('.star').forEach(s => s.textContent = '☆');
+    for (let i = 0; i < selectedRating; i++) {
+      document.querySelectorAll('.star')[i].textContent = '★';
+    }
+  });
+});
+
+document.getElementById('form-review').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const data = {
+    rating: selectedRating,
+    content: document.getElementById('content').value
+  };
+
+  fetch("{% url 'review:add_review' field.id %}", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}',
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert("Ulasan berhasil dikirim!");
+      closeModal();
+      location.reload();
+    } else {
+      alert("Gagal menambah ulasan: " + data.error);
+    }
+  })
+  .catch(err => console.error('Fetch error:', err));
+});
+</script>
