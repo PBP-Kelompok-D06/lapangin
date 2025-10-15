@@ -5,7 +5,7 @@
 {% block title %}All Reviews{% endblock title %}
 
 {% block content %}
-<h1 id="ulasan" style="display: flex;width: 324px;height: 38px;flex-direction: column;justify-content: center;flex-shrink: 0; color: var(--Foundation-Primary-primary-900, #4D5833);font-family: Montserrat;font-size: 25px;font-style: normal;font-weight: 600;line-height: 120%;">Ulasan untuk {{ field.name }}</h1>
+<h1 id="ulasan" style="display: flex;width: 1000px;height: 38px;flex-direction: column;justify-content: center;flex-shrink: 0; color: var(--Foundation-Primary-primary-900, #4D5833);font-family: Montserrat;font-size: 25px;font-style: normal;font-weight: 600;line-height: 120%;">Ulasan untuk {{ field.nama_lapangan }}</h1>
 
 <button id="btn-tambah-ulasan" style="display: flex;height: 52px;padding: 12px 28px;align-items: center;gap: 12px; border-radius: 4px; background: var(--Foundation-Primary-primary-500, #B8D279);">
     Tambah Ulasan
@@ -18,7 +18,7 @@
       <img src="{% static 'images/default_profile.svg' %}" alt="Profile Picture" class="profile-picture">
       <div class="profile-name">
         <h1 style="font-family: Montserrat; font-size: 20px; font-weight: 600; color: #212121; line-height: 120%;">
-          {{ review.user.username }}
+          {{ review.user.user.username }}
         </h1>
         <p style="font-family: Montserrat; font-size: 13px; font-weight: 400; line-height: 120%; letter-spacing: 0.26px;">
           {{ review.created_at|date:"d M Y H:i" }}
@@ -29,6 +29,15 @@
       <p style="text-align: justify; font-family: Montserrat; font-size: 20px; color: #212121; font-weight: 500; line-height: 120%; letter-spacing: 0.4px;">
         {{ review.content }}
       </p>
+      <div class="rating" style="color: #FFD700; font-size: 18px;">
+        {% for i in "12345" %}
+          {% if forloop.counter <= review.rating %}
+            ★
+          {% else %}
+            ☆
+          {% endif %}
+        {% endfor %}
+      </div>
     </div>
   </div>
   {% endfor %}
@@ -56,4 +65,3 @@
 
 
 {% endblock %}
-
