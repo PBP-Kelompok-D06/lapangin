@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Lapang.in{% endblock title %}
+
+{% block content %}
+<div class="bg-gray-50 w-full min-h-[80vh] flex items-center justify-center p-8">
+  <div class="max-w-md w-full">
+    <div class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">Join Us</h1>
+        <p class="text-gray-600">Create your Lapangin account</p>
+      </div>
+
+      <!-- Messages Display (untuk pesan success/error umum) -->
+      {% if messages %}
+        <div class="mb-4">
+          {% for message in messages %}
+            <div class="px-4 py-3 rounded-md text-sm border bg-green-50 border-green-200 text-green-700">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{% url 'authbooking:register' %}" class="space-y-5">
+        {% csrf_token %}
+        
+        <!-- Logic untuk merender SEMUA field (Username, Password x2, dan ROLE dropdown) -->
+        <div class="space-y-4">
+             {% for field in form %}
+                <div class="space-y-2">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ field.label }}
+                    </label>
+                    
+                    <!-- Render Field: Ini akan merender input text/password/select dengan styling default -->
+                    {{ field }} 
+
+                    <!-- Field Errors -->
+                    {% for error in field.errors %}
+                        <p class="text-xs text-red-500 mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+             {% endfor %}
+
+            <!-- Errors yang tidak terkait field (non_field_errors) -->
+            {% if form.non_field_errors %}
+                <div class="px-4 py-3 rounded text-sm border bg-red-50 border-red-200 text-red-700">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full bg-[#839556] text-white font-medium py-3 px-4 rounded-md hover:bg-[#A7BF6E] transition-colors">
+          Create Account
+        </button>
+      </form>
+
+      <div class="mt-6 text-center pt-6 border-t border-gray-200">
+        <p class="text-gray-500 text-sm">
+          Already have an account? 
+          <a href="{% url 'authbooking:login' %}" class="text-[#839556] hover:text-[#A7BF6E] font-medium">
+            Sign In
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

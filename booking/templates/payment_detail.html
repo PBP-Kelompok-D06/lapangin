@@ -1,0 +1,68 @@
+{% extends 'base.html' %} 
+{% load static %}
+
+{% block title %}Pembayaran Booking #{{ booking.id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-lg border-0">
+            
+            <div class="card-header bg-success text-white text-center py-4 rounded-t-lg">
+                <h3 class="mb-0 text-3xl font-extrabold">Instruksi Pembayaran</h3>
+            </div>
+            
+            <div class="card-body p-6">
+                
+                {# ALERT STATUS BOOKING #}
+                <div class="alert alert-warning text-center border-2 border-yellow-500 bg-yellow-50 p-4 rounded-lg mb-6">
+                    <p class="font-semibold text-yellow-800">
+                        Booking Anda (ID: <strong>#{{ booking.id }}</strong>) telah dibuat. Status: {{ booking.get_status_pembayaran_display }}.
+                    </p>
+                    <p class="text-sm text-yellow-700 mt-1">Harap segera lakukan transfer sebelum waktu habis.</p>
+                </div>
+
+                {# DETAIL BOOKING #}
+                <h4 class="mb-3 text-xl font-bold text-gray-700 border-b pb-2">Rincian Booking</h4>
+                <div class="space-y-2 mb-6">
+                    <p><strong>Lapangan:</strong> {{ booking.slot.lapangan.nama_lapangan }}</p>
+                    <p><strong>Waktu:</strong> {{ booking.slot.tanggal|date:"d F Y" }} | {{ booking.slot.jam_mulai|date:"H:i" }} - {{ booking.slot.jam_akhir|date:"H:i" }}</p>
+                    
+                    {# MENGGANTI |intcomma dengan |floatformat:0 #}
+                    <p class="h4 text-indigo-600 mt-3">
+                        <strong>Total Pembayaran:</strong> Rp {{ booking.total_bayar|floatformat:0 }}
+                    </p>
+                    <p class="text-sm text-gray-500">Dibuat oleh: {{ booking.user.username }}</p>
+                </div>
+
+                <hr class="my-6">
+
+                {# INFORMASI TRANSFER #}
+                <h4 class="mb-3 text-xl font-bold text-gray-700">Lakukan Transfer ke</h4>
+                <div class="p-4 mb-4 bg-gray-100 border border-indigo-300 rounded-lg">
+                    <p class="mb-1 text-sm text-gray-600">Bank & Nomor Rekening:</p>
+                    <h5 class="mb-0 text-2xl font-bold text-indigo-700">{{ no_rekening }}</h5>
+                </div>
+                
+                {# TOMBOL KONFIRMASI (WA) #}
+                <h4 class="mb-3 text-xl font-bold text-gray-700">Konfirmasi Pembayaran</h4>
+                <p class="text-sm text-gray-600 mb-4">
+                    Setelah transfer, klik tombol di bawah ini untuk mengirim bukti pembayaran Anda kepada pengelola.
+                </p>
+                
+                {# Link WA Dinamis #}
+                <a href="https://wa.me/{{ contact_whatsapp }}?text=Halo%20Admin%2C%20saya%20*{{ booking.user.username|urlencode }}*%20telah%20melakukan%20pembayaran%20untuk%20booking%20ID%20%23{{ booking.id }}.%20Mohon%20validasi%20bukti%20transfer." 
+                   target="_blank" 
+                   class="btn btn-lg w-full bg-green-600 text-white hover:bg-green-700 transition duration-150 py-3 rounded-lg text-lg font-semibold shadow-xl">
+                    <i class="fab fa-whatsapp mr-2"></i> Konfirmasi Pembayaran (WA)
+                </a>
+
+                <div class="text-center mt-4">
+                    <a href="{% url 'booking:show_booking_page' %}" class="text-indigo-600 hover:text-indigo-800 transition duration-150">Kembali ke Daftar Lapangan</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
