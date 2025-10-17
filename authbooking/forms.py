@@ -21,7 +21,7 @@ class CustomUserCreationForm(UserCreationForm):
             if field_name == 'nomor_rekening':
                 placeholder_text = "contoh: 1234567890 - a.n. Budi Santoso"
             elif field_name == 'nomor_whatsapp':
-                placeholder_text = "contoh: 081234567890 (Budi Santoso)"
+                placeholder_text = "contoh: +6281234567890"
             elif field_name == 'role':
                 placeholder_text = "Pilih role Anda"  # untuk dropdown
 
@@ -29,3 +29,21 @@ class CustomUserCreationForm(UserCreationForm):
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#839556] transition-colors',
                 'placeholder': placeholder_text,
             })
+    
+    def clean_nomor_whatsapp(self):
+        nomor = self.cleaned_data.get('nomor_whatsapp', '').strip()
+
+        # Jika user isi 0812..., ubah ke +62812...
+        if nomor.startswith('0'):
+            nomor = '+62' + nomor[1:]
+        elif not nomor.startswith('+62'):
+            nomor = '+62' + nomor  # jaga-jaga kalau lupa nulis '+'
+
+        # Validasi isi dan panjang nomor
+        if not nomor[1:].replace('+', '').isdigit():
+            raise forms.ValidationError("Nomor WhatsApp hanya boleh berisi angka setelah tanda '+'.")
+        if len(nomor) < 10 or len(nomor) > 15:
+            raise forms.ValidationError("Nomor WhatsApp tampaknya tidak valid.")
+
+        
+        return nomor
