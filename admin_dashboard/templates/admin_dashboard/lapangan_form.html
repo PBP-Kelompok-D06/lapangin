@@ -1,0 +1,243 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}{% if lapangan %}Edit{% else %}Tambah{% endif %} Lapangan{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">{% if lapangan %}Edit{% else %}Tambah{% endif %} Lapangan</h1>
+    
+    <form method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow-md p-6">
+        {% csrf_token %}
+        
+        <!-- Nama Lapangan -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">NAME</label>
+            <input type="text" name="nama" 
+                   value="{% if lapangan %}{{ lapangan.nama }}{% endif %}"
+                   placeholder="[NAME]" 
+                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]" 
+                   required>
+        </div>
+
+        <!-- Jenis Lapangan -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">JENIS LAPANGAN</label>
+            <select name="jenis" 
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]" 
+                    required>
+                <option value="">Pilih Jenis</option>
+                {% for value, label in jenis_choices %}
+                <option value="{{ value }}" {% if lapangan and lapangan.jenis == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Lokasi -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">LOKASI</label>
+            <input type="text" name="lokasi" 
+                   value="{% if lapangan %}{{ lapangan.lokasi }}{% endif %}"
+                   placeholder="Contoh: Jakarta Selatan" 
+                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]" 
+                   required>
+        </div>
+
+        <!-- Upload Foto -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">FOTO LAPANGAN</label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                {% if lapangan and lapangan.foto_utama %}
+                <img src="{{ lapangan.foto_utama.url }}" alt="Preview" id="imagePreview" class="mx-auto mb-4 max-h-48">
+                {% else %}
+                <i class="fas fa-image text-gray-300 text-6xl mb-4"></i>
+                {% endif %}
+                <input type="file" name="foto_utama" id="fotoInput" accept="image/*" class="hidden">
+                <label for="fotoInput" class="cursor-pointer bg-[#86A96F] text-white px-6 py-2 rounded-lg inline-block hover:bg-[#5A6B4A] transition">
+                    Upload Foto
+                </label>
+                <p class="text-gray-500 text-sm mt-2">Format: JPG, PNG (Max 5MB)</p>
+            </div>
+        </div>
+
+        <!-- Harga -->
+        <div class="mb-6 flex space-x-4">
+            <div class="flex-1">
+                <label class="block text-gray-700 font-bold mb-2">PRICE</label>
+                <input type="number" name="harga" 
+                       value="{% if lapangan %}{{ lapangan.harga_per_jam }}{% endif %}"
+                       placeholder="[PRICE] COINS" 
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]" 
+                       required>
+            </div>
+            <div class="flex-1">
+                <label class="block text-gray-700 font-bold mb-2">STOCK</label>
+                <input type="number" name="stock_default" 
+                       value="1"
+                       placeholder="[STOCK] PCS" 
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]">
+            </div>
+        </div>
+
+        <!-- Variant -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <label class="block text-gray-700 font-bold">VARIANT</label>
+                <button type="button" onclick="addVariant()" 
+                        class="bg-[#86A96F] text-white px-4 py-1 rounded-lg text-sm hover:bg-[#5A6B4A] transition">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div id="variantContainer" class="space-y-2">
+                <div class="flex space-x-2">
+                    {% for value, label in ukuran_choices %}
+                    <button type="button" 
+                            class="variant-btn px-4 py-2 border border-gray-300 rounded-lg hover:bg-[#86A96F] hover:text-white transition"
+                            data-value="{{ value }}">
+                        {{ value }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Color -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <label class="block text-gray-700 font-bold">COLOR</label>
+                <button type="button" onclick="addColor()" 
+                        class="bg-[#86A96F] text-white px-4 py-1 rounded-lg text-sm hover:bg-[#5A6B4A] transition">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div id="colorContainer" class="flex space-x-2">
+                <div class="w-10 h-10 rounded-full bg-gray-300 border-2 border-gray-400 cursor-pointer"></div>
+                <div class="w-10 h-10 rounded-full bg-blue-300 border-2 border-gray-400 cursor-pointer"></div>
+                <div class="w-10 h-10 rounded-full bg-green-300 border-2 border-gray-400 cursor-pointer"></div>
+                <div class="w-10 h-10 rounded-full bg-red-300 border-2 border-gray-400 cursor-pointer"></div>
+                <div class="w-10 h-10 rounded-full bg-yellow-300 border-2 border-gray-400 cursor-pointer"></div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <label class="block text-gray-700 font-bold">CATEGORIES</label>
+                <button type="button" onclick="addCategory()" 
+                        class="bg-[#86A96F] text-white px-4 py-1 rounded-lg text-sm hover:bg-[#5A6B4A] transition">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div id="categoryContainer" class="grid grid-cols-5 gap-2">
+                <input type="text" name="kategori[]" placeholder="[Category]" 
+                       class="border border-[#86A96F] rounded-lg px-3 py-2 text-center">
+                <input type="text" name="kategori[]" placeholder="[Category]" 
+                       class="border border-[#86A96F] rounded-lg px-3 py-2 text-center">
+                <input type="text" name="kategori[]" placeholder="[Category]" 
+                       class="border border-[#86A96F] rounded-lg px-3 py-2 text-center">
+                <input type="text" name="kategori[]" placeholder="[Category]" 
+                       class="border border-[#86A96F] rounded-lg px-3 py-2 text-center">
+                <input type="text" name="kategori[]" placeholder="[Category]" 
+                       class="border border-[#86A96F] rounded-lg px-3 py-2 text-center">
+            </div>
+        </div>
+
+        <!-- Deskripsi -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">DESKRIPSI</label>
+            <textarea name="deskripsi" rows="4" 
+                      placeholder="Deskripsi lapangan..."
+                      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]">{% if lapangan %}{{ lapangan.deskripsi }}{% endif %}</textarea>
+        </div>
+
+        <!-- Fasilitas -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">FASILITAS</label>
+            <textarea name="fasilitas" rows="3" 
+                      placeholder="Contoh: Musholla, Cafe, Parkir luas..."
+                      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]">{% if lapangan %}{{ lapangan.fasilitas }}{% endif %}</textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-4">
+            <button type="button" onclick="window.location.href='{% url 'admin_dashboard:lapangan_list' %}'" 
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition">
+                DELETE
+            </button>
+            <button type="submit" 
+                    class="flex-1 bg-gradient-to-r from-[#86A96F] to-[#D4A574] hover:from-[#5A6B4A] hover:to-[#C4956A] text-white py-3 rounded-lg font-semibold transition">
+                SAVE
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Image preview
+    document.getElementById('fotoInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let preview = document.getElementById('imagePreview');
+                if (!preview) {
+                    preview = document.createElement('img');
+                    preview.id = 'imagePreview';
+                    preview.className = 'mx-auto mb-4 max-h-48';
+                    document.querySelector('label[for="fotoInput"]').parentNode.insertBefore(preview, document.querySelector('label[for="fotoInput"]'));
+                }
+                preview.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Variant functionality
+    function addVariant() {
+        const container = document.getElementById('variantContainer');
+        const newVariant = document.createElement('div');
+        newVariant.className = 'flex space-x-2 mt-2';
+        newVariant.innerHTML = `
+            <input type="text" name="varian[]" placeholder="Size" class="border rounded px-3 py-2">
+            <input type="number" name="stock[]" placeholder="Stock" class="border rounded px-3 py-2">
+            <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(newVariant);
+    }
+
+    // Variant button selection
+    document.querySelectorAll('.variant-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.toggle('bg-[#86A96F]');
+            this.classList.toggle('text-white');
+        });
+    });
+
+    // Color functionality
+    function addColor() {
+        const container = document.getElementById('colorContainer');
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.name = 'warna_hex[]';
+        input.className = 'w-10 h-10 rounded-full cursor-pointer';
+        container.appendChild(input);
+    }
+
+    // Category functionality
+    function addCategory() {
+        const container = document.getElementById('categoryContainer');
+        const newInput = document.createElement('input');
+        newInput.type = 'text';
+        newInput.name = 'kategori[]';
+        newInput.placeholder = '[Category]';
+        newInput.className = 'border border-[#86A96F] rounded-lg px-3 py-2 text-center';
+        container.appendChild(newInput);
+    }
+</script>
+{% endblock %}

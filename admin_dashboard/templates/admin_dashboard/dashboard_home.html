@@ -1,0 +1,60 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Dashboard - Manajemen Produk{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">Manajemen Produk</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Card Lapangan -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-8">
+            <h2 class="text-2xl font-bold mb-6 text-center">Lapangan</h2>
+            <div class="flex justify-center mb-6">
+                <div class="bg-[#C8D5B9] w-full py-8 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-futbol text-6xl text-[#5A6B4A]"></i>
+                </div>
+            </div>
+            <div class="text-center mb-4">
+                <p class="text-gray-600 mb-2">Total Lapangan:</p>
+                <p class="text-4xl font-bold text-[#5A6B4A]">{{ total_lapangan }}</p>
+            </div>
+            <a href="{% url 'admin_dashboard:lapangan_list' %}" 
+               class="block w-full bg-[#86A96F] hover:bg-[#5A6B4A] text-white text-center py-3 rounded-lg font-semibold transition">
+                Masuk
+            </a>
+        </div>
+
+        <!-- Card Komunitas -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-8">
+            <h2 class="text-2xl font-bold mb-6 text-center">Komunitas</h2>
+            <div class="flex justify-center mb-6">
+                <div class="bg-[#C8D5B9] w-full py-8 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-6xl text-[#5A6B4A]"></i>
+                </div>
+            </div>
+            <div class="text-center mb-4">
+                <p class="text-gray-600 mb-2">Total Komunitas:</p>
+                <p class="text-4xl font-bold text-[#5A6B4A]">{{ total_komunitas }}</p>
+            </div>
+            <a href="{% url 'komunitas:komunitas_list' %}" 
+               class="block w-full bg-[#86A96F] hover:bg-[#5A6B4A] text-white text-center py-3 rounded-lg font-semibold transition">
+                Masuk
+            </a>
+        </div>
+    </div>
+
+    <!-- Request Komunitas Alert -->
+    {% if pending_requests > 0 %}
+    <div class="mt-8 bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-yellow-500 mr-3"></i>
+            <div>
+                <p class="font-semibold">Ada {{ pending_requests }} request komunitas menunggu persetujuan!</p>
+                <a href="{% url 'komunitas:request_list' %}" class="text-blue-600 hover:underline">Lihat sekarang →</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
