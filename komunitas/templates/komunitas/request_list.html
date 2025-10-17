@@ -1,0 +1,87 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Request Komunitas{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Request Komunitas dari Member</h1>
+        <a href="{% url 'komunitas:komunitas_list' %}" 
+           class="text-[#86A96F] hover:underline flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i> Kembali ke Komunitas
+        </a>
+    </div>
+
+    {% if requests %}
+    <div class="space-y-4">
+        {% for req in requests %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                        <h3 class="text-xl font-bold mr-3">{{ req.nama_komunitas }}</h3>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold
+                            {% if req.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif req.status == 'approved' %}bg-green-100 text-green-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ req.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Jenis Olahraga</p>
+                            <p class="font-semibold">{{ req.jenis_olahraga|title }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Lokasi Preferensi</p>
+                            <p class="font-semibold">{{ req.lokasi_preferensi }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Pemohon</p>
+                            <p class="font-semibold">{{ req.pemohon.username }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Tanggal Request</p>
+                            <p class="font-semibold">{{ req.tanggal_request|date:"d M Y H:i" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-500 mb-1">Deskripsi</p>
+                        <p class="text-gray-700">{{ req.deskripsi }}</p>
+                    </div>
+
+                    {% if req.catatan_admin %}
+                    <div class="bg-gray-50 rounded p-3">
+                        <p class="text-sm text-gray-500 mb-1">Catatan Admin</p>
+                        <p class="text-gray-700">{{ req.catatan_admin }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if req.status == 'pending' %}
+                <div class="ml-6 flex flex-col space-y-2">
+                    <a href="{% url 'komunitas:request_approve' req.pk %}" 
+                       class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition text-center">
+                        <i class="fas fa-check mr-2"></i> Approve
+                    </a>
+                    <a href="{% url 'komunitas:request_reject' req.pk %}" 
+                       class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-semibold transition text-center">
+                        <i class="fas fa-times mr-2"></i> Reject
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-600 mb-2">Tidak Ada Request</h3>
+        <p class="text-gray-500">Belum ada request komunitas dari member.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

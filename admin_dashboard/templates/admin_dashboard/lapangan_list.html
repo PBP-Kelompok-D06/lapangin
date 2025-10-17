@@ -1,0 +1,147 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Daftar Lapangan{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-3xl font-bold mb-4">Lapangan</h1>
+    
+    <!-- Filter & Add Button -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex space-x-4">
+            <!-- Filter Jenis -->
+            <select id="jenisFilter" class="border border-gray-300 rounded-lg px-4 py-2">
+                <option value="">Jenis Lapangan</option>
+                {% for value, label in jenis_choices %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+            
+            <!-- Filter Lokasi -->
+            <input type="text" id="lokasiFilter" placeholder="Filter Lokasi" 
+                   class="border border-gray-300 rounded-lg px-4 py-2">
+            
+            <!-- Filter Ulasan -->
+            <select id="ulasanFilter" class="border border-gray-300 rounded-lg px-4 py-2">
+                <option value="">Filter Ulasan</option>
+                <option value="5">5 Bintang</option>
+                <option value="4">4+ Bintang</option>
+                <option value="3">3+ Bintang</option>
+            </select>
+        </div>
+        
+        <a href="{% url 'admin_dashboard:lapangan_create' %}" 
+           class="bg-[#86A96F] hover:bg-[#5A6B4A] text-white px-6 py-2 rounded-lg font-semibold transition flex items-center">
+            <i class="fas fa-plus mr-2"></i> Tambah
+        </a>
+    </div>
+
+    <!-- Grid Lapangan -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="lapanganGrid">
+        {% for lapangan in lapangan_list %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="relative h-48">
+                {% if lapangan.foto_utama %}
+                <img src="{{ lapangan.foto_utama.url }}" alt="{{ lapangan.nama }}" 
+                     class="w-full h-full object-cover">
+                {% else %}
+                <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <i class="fas fa-image text-gray-400 text-4xl"></i>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="p-4">
+                <h3 class="font-bold text-lg mb-1">{{ lapangan.nama }}</h3>
+                <p class="text-sm text-gray-600 mb-1">
+                    <span class="bg-[#86A96F] text-white px-2 py-1 rounded text-xs">{{ lapangan.get_jenis_display }}</span>
+                    <span class="text-[#86A96F] font-semibold">• {{ lapangan.lokasi|truncatewords:3 }}</span>
+                </p>
+                <p class="text-gray-700 text-sm mb-2">{{ lapangan.fasilitas|truncatewords:5 }}</p>
+                <p class="font-bold text-lg mb-3">Rp {{ lapangan.harga_per_jam|floatformat:0 }}/jam</p>
+                
+                <div class="flex items-center mb-3">
+                    <div class="flex text-yellow-400">
+                        {% for i in "12345" %}
+                        <i class="fas fa-star"></i>
+                        {% endfor %}
+                    </div>
+                    <span class="ml-2 text-sm text-gray-600">0</span>
+                </div>
+                
+                <a href="#" class="text-[#86A96F] hover:underline text-sm mb-3 block">
+                    Cek Lapangan →
+                </a>
+                
+                <div class="flex space-x-2">
+                    <a href="{% url 'admin_dashboard:lapangan_edit' lapangan.pk %}" 
+                       class="flex-1 bg-gray-800 hover:bg-gray-700 text-white text-center py-2 rounded transition">
+                        Edit
+                    </a>
+                    <form method="POST" action="{% url 'admin_dashboard:lapangan_delete' lapangan.pk %}" 
+                          onsubmit="return confirm('Yakin ingin menghapus lapangan ini?')" class="flex-1">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded transition">
+                            Hapus
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-4 text-center py-12">
+            <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+            <p class="text-gray-500 text-lg">Belum ada lapangan. Tambahkan lapangan pertama Anda!</p>
+            <a href="{% url 'admin_dashboard:lapangan_create' %}" 
+               class="inline-block mt-4 bg-[#86A96F] text-white px-6 py-2 rounded-lg hover:bg-[#5A6B4A] transition">
+                Tambah Lapangan
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center items-center space-x-2 mt-8">
+        <button class="bg-[#C8D5B9] hover:bg-[#86A96F] text-gray-800 w-10 h-10 rounded-full">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="bg-[#86A96F] text-white w-10 h-10 rounded-full">1</button>
+        <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 w-10 h-10 rounded-full">2</button>
+        <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 w-10 h-10 rounded-full">3</button>
+        <button class="bg-[#C8D5B9] hover:bg-[#86A96F] text-gray-800 w-10 h-10 rounded-full">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filter functionality
+    document.getElementById('jenisFilter').addEventListener('change', function() {
+        const jenis = this.value;
+        const currentUrl = new URL(window.location.href);
+        if (jenis) {
+            currentUrl.searchParams.set('jenis', jenis);
+        } else {
+            currentUrl.searchParams.delete('jenis');
+        }
+        window.location.href = currentUrl.toString();
+    });
+
+    document.getElementById('lokasiFilter').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const lokasi = this.value;
+            const currentUrl = new URL(window.location.href);
+            if (lokasi) {
+                currentUrl.searchParams.set('lokasi', lokasi);
+            } else {
+                currentUrl.searchParams.delete('lokasi');
+            }
+            window.location.href = currentUrl.toString();
+        }
+    });
+</script>
+{% endblock %}

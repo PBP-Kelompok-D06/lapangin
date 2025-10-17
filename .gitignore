@@ -113,3 +113,11 @@ GitHub.sublime-settings
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
+
+# Media files (user uploads)
+media/
+!media/.gitkeep
+
+# Static files
+staticfiles/
+static_collected/

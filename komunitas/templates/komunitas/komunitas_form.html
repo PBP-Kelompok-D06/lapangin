@@ -1,0 +1,118 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}{% if komunitas %}Edit{% else %}Buat{% endif %} Komunitas{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">{% if komunitas %}Edit{% else %}Buat{% endif %} Komunitas</h1>
+    
+    <form method="POST" enctype="multipart/form-data" class="bg-white rounded-lg shadow-md p-6">
+        {% csrf_token %}
+        
+        <!-- Nama Komunitas -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">NAMA KOMUNITAS</label>
+            <input type="text" name="nama" 
+                   value="{% if komunitas %}{{ komunitas.nama }}{% endif %}"
+                   placeholder="Contoh: Pacil Badminton Club" 
+                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]" 
+                   required>
+        </div>
+
+        <!-- Jenis Olahraga -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">JENIS OLAHRAGA</label>
+            <select name="jenis_olahraga" 
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]" 
+                    required>
+                <option value="">Pilih Jenis Olahraga</option>
+                <option value="futsal" {% if komunitas and komunitas.jenis_olahraga == 'futsal' %}selected{% endif %}>Futsal</option>
+                <option value="basket" {% if komunitas and komunitas.jenis_olahraga == 'basket' %}selected{% endif %}>Basket</option>
+                <option value="badminton" {% if komunitas and komunitas.jenis_olahraga == 'badminton' %}selected{% endif %}>Badminton</option>
+            </select>
+        </div>
+
+        <!-- Lokasi -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">LOKASI</label>
+            <input type="text" name="lokasi" 
+                   value="{% if komunitas %}{{ komunitas.lokasi }}{% endif %}"
+                   placeholder="Contoh: Depok, Bulutangkis" 
+                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]" 
+                   required>
+        </div>
+
+        <!-- Upload Foto -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">FOTO KOMUNITAS</label>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                {% if komunitas and komunitas.foto %}
+                <img src="{{ komunitas.foto.url }}" alt="Preview" id="imagePreview" class="mx-auto mb-4 max-h-48">
+                {% else %}
+                <i class="fas fa-image text-gray-300 text-6xl mb-4"></i>
+                {% endif %}
+                <input type="file" name="foto" id="fotoInput" accept="image/*" class="hidden">
+                <label for="fotoInput" class="cursor-pointer bg-[#86A96F] text-white px-6 py-2 rounded-lg inline-block hover:bg-[#5A6B4A] transition">
+                    Upload Foto
+                </label>
+                <p class="text-gray-500 text-sm mt-2">Format: JPG, PNG (Max 5MB)</p>
+            </div>
+        </div>
+
+        <!-- Deskripsi -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">DESKRIPSI</label>
+            <textarea name="deskripsi" rows="4" 
+                      placeholder="Ceritakan tentang komunitas ini..."
+                      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]" 
+                      required>{% if komunitas %}{{ komunitas.deskripsi }}{% endif %}</textarea>
+        </div>
+
+        <!-- Link Grup -->
+        <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">LINK GRUP (WhatsApp/Telegram/Discord)</label>
+            <input type="url" name="link_grup" 
+                   value="{% if komunitas %}{{ komunitas.link_grup }}{% endif %}"
+                   placeholder="https://chat.whatsapp.com/..." 
+                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-[#86A96F]">
+            <p class="text-gray-500 text-sm mt-1">Member akan diarahkan ke link ini untuk bergabung</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-4">
+            <button type="button" onclick="window.location.href='{% url 'komunitas:komunitas_list' %}'" 
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition">
+                BATAL
+            </button>
+            <button type="submit" 
+                    class="flex-1 bg-gradient-to-r from-[#86A96F] to-[#D4A574] hover:from-[#5A6B4A] hover:to-[#C4956A] text-white py-3 rounded-lg font-semibold transition">
+                SIMPAN
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Image preview
+    document.getElementById('fotoInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let preview = document.getElementById('imagePreview');
+                if (!preview) {
+                    preview = document.createElement('img');
+                    preview.id = 'imagePreview';
+                    preview.className = 'mx-auto mb-4 max-h-48';
+                    document.querySelector('label[for="fotoInput"]').parentNode.insertBefore(preview, document.querySelector('label[for="fotoInput"]'));
+                }
+                preview.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}
