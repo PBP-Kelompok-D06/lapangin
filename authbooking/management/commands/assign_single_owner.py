@@ -1,8 +1,26 @@
 '''
 File ini digunakan untuk nge-assign pemilik lapangan yang ada di dataset csv (data_lapangan.csv)
-1. Pastiin udah nge load data set (cara nge loadnya disesuaiin aja sama modul kalian)
-2. Pastiin sebelum run code ini, bikin akun dulu dengan username 'juragan01' dengan pw 'juragan123'
-3. di cmd jalanin perintah ini: python manage.py assign_single_owner 
+Langkah-langkah sebelum menjalankan command ini:
+1. Pastikan sudah melakukan load dataset lapangan (sesuai instruksi modul kalian).
+2. Pastikan sudah membuat akun PEMILIK dengan username 'juragan01' dan password 'juragan123'.
+3. (Opsional tapi disarankan) Assign nomor rekening dan nomor WhatsApp untuk user 'juragan01' lewat Django shell:
+
+   Jalankan di terminal:
+   >>> python manage.py shell
+
+   Lalu di shell Python:
+   >>> from django.contrib.auth.models import User
+   >>> user = User.objects.get(username='juragan01')
+   >>> profile = user.profile
+   >>> profile.nomor_rekening = "1234567890 - a.n Juragan Lapangin"
+   >>> profile.nomor_whatsapp = "081234567890"
+   >>> profile.save()
+   >>> print(profile.nomor_rekening, profile.nomor_whatsapp)
+
+   (Kalau sudah tampil dengan benar, berarti berhasil disimpan.)
+
+4. Jalankan command ini di terminal:
+   python manage.py assign_single_owner 
 '''
 
 

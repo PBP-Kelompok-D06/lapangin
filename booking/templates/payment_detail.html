@@ -6,7 +6,7 @@
 {% block content %}
 <div class="flex justify-center mt-10">
     <div class="w-full max-w-2xl">
-        <div class="bg-white shadow-xl rounded-xl border border-gray-200">
+        <div class="bg-white shadow-md rounded-lg border border-gray-200">
             
             <div class="text-center py-6 border-b border-gray-200">
                 <i class="fas fa-check-circle text-[#a7bf6e] text-5xl mb-2"></i>
@@ -17,9 +17,9 @@
             <div class="p-6">
                 
                 {% if booking.status_pembayaran == 'PENDING' %}
-                <div id="countdown-alert" class="bg-red-50 border border-red-300 text-red-800 p-4 rounded-lg text-center mb-6">
+                <div id="countdown-alert" class="bg-[rgba(232,201,0,0.1)] border border-[#B59D00] text-[#B59D00] p-4 rounded-lg text-center mb-6">
                     <p class="text-sm font-semibold mb-2">Segera lakukan pembayaran dalam waktu:</p>
-                    <span id="countdown-timer" class="text-4xl font-extrabold">5:00</span>
+                    <span id="countdown-timer" class="text-4xl font-bold">5:00</span>
                     <p class="text-xs mt-1">Jika waktu habis, pemesanan akan dibatalkan.</p>
                 </div>
                 {% else %}
@@ -33,16 +33,16 @@
                     <p><strong>Lapangan:</strong> {{ booking.slot.lapangan.nama_lapangan }}</p>
                     <p><strong>Tanggal:</strong> {{ booking.slot.tanggal|date:"d F Y" }}</p>
                     <p><strong>Waktu:</strong> {{ booking.slot.jam_mulai|date:"H:i" }} - {{ booking.slot.jam_akhir|date:"H:i" }}</p>
-                    <p class="text-xl font-extrabold text-indigo-700 pt-2">
+                    <p class="text-xl font-bold text-[#B59D00] pt-2">
                         Total: Rp {{ booking.total_bayar|floatformat:0 }}
                     </p>
                 </div>
 
                 <h4 class="text-lg font-bold text-gray-700 mb-3 border-b pb-1">Informasi Transfer</h4>
-                <div class="bg-gray-100 p-4 rounded-lg border border-gray-300 mb-6">
-                    <p class="text-sm text-gray-600">Nomor Rekening:</p>
-                    <h5 class="text-2xl font-bold text-gray-900">{{ no_rekening }}</h5>
-                    <p class="text-xs text-red-500 mt-1">Pastikan transfer sesuai jumlah total di atas.</p>
+                <div class="bg-gray-100 p-4 rounded-lg border border-indigo-300 mb-6">
+                    <p class="text-sm text-indigo-600">Nomor Rekening:</p>
+                    <h5 class="text-2xl font-bold text-indigo-900">{{ no_rekening }}</h5>
+                    <p class="text-xs text-indigo-500 mt-1">Pastikan transfer sesuai jumlah total di atas.</p>
                 </div>
                 
                 <h4 class="text-lg font-bold text-gray-700 mb-3 border-b pb-1">Langkah Terakhir</h4>
@@ -50,15 +50,25 @@
                     Setelah melakukan transfer, **wajib** konfirmasi dengan mengklik tombol di bawah ini.
                 </p>
 
-                <a href="https://wa.me/{{ contact_whatsapp }}?text=Halo%20Admin%2C%20saya%20*{{ booking.user.username|urlencode }}*%20telah%20melakukan%20pembayaran%20untuk%20booking%20ID%20%23{{ booking.id }}.%20Mohon%20validasi%20bukti%20transfer." 
-                   target="_blank" 
-                   class="flex items-center justify-center w-full bg-green-500 text-white font-bold py-3 rounded-lg hover:bg-green-600 transition shadow-lg">
-                    <i class="fab fa-whatsapp text-xl mr-2"></i> Konfirmasi Pembayaran
-                </a>
-                
-                <div class="flex items-center justify-center w-full bg-green-500 text-white font-bold py-3 rounded-lg hover:bg-green-600 transition shadow-lg">
-                    <a href="{% url 'booking:show_booking_page' %}" class="text-indigo-600 hover:text-indigo-800 transition duration-150 text-sm">Kembali ke Daftar Lapangan</a>
+                <div class="flex gap-3 mt-6">
+                    <!-- Tombol Kembali ke Daftar Lapangan -->
+                    <a href="{% url 'booking:show_booking_page' %}" 
+                    class="flex items-center justify-center flex-1 border border-[#a7bf6e] text-[#a7bf6e] font-bold py-3 rounded-lg hover:bg-green-50 transition shadow-sm">
+                        Kembali ke Daftar Lapangan
+                    </a>
+
+                    <!-- Tombol Konfirmasi Pembayaran -->
+                    <a href="https://wa.me/{{ contact_whatsapp }}?text=Halo%20Admin%2C%20saya%20*{{ booking.user.username|urlencode }}*%20telah%20melakukan%20pembayaran%20untuk%20booking%20ID%20%23{{ booking.id }}.%20Mohon%20validasi%20bukti%20transfer." 
+                    target="_blank" 
+                    class="flex items-center justify-center flex-1 bg-green-500 text-white font-bold py-3 rounded-lg hover:bg-green-600 transition shadow-sm">
+                        <i class="fab fa-whatsapp text-xl mr-2"></i> Konfirmasi Pembayaran
+                    </a>
                 </div>
+
+                <p class="text-sm text-red-500 mt-4 ">
+                    Perhatian : Sesi yang sudah berhasil di booking (pembayaran berhasil) tidak dapat dibatalkan dengan alasan apapun.
+                </p>
+
             </div>
         </div>
     </div>

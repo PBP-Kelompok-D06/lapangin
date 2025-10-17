@@ -58,6 +58,23 @@
           class="w-full bg-[#839556] text-white font-medium py-3 px-4 rounded-md hover:bg-[#A7BF6E] transition-colors">
           Create Account
         </button>
+
+        <script>
+          document.addEventListener("DOMContentLoaded", function() {
+            const roleSelect = document.getElementById("id_role");
+            const rekeningField = document.getElementById("id_nomor_rekening").closest("div");
+            const whatsappField = document.getElementById("id_nomor_whatsapp").closest("div");
+
+            function togglePemilikFields() {
+              const isPemilik = roleSelect.value === "PEMILIK";
+              rekeningField.style.display = isPemilik ? "block" : "none";
+              whatsappField.style.display = isPemilik ? "block" : "none";
+            }
+
+            togglePemilikFields(); // inisialisasi saat pertama kali
+            roleSelect.addEventListener("change", togglePemilikFields);
+          });
+        </script>
       </form>
 
       <div class="mt-6 text-center pt-6 border-t border-gray-200">

@@ -16,4 +16,8 @@ urlpatterns = [
     # Path 3: Halaman pembayaran, membutuhkan ID booking (Filter Login Wajib)
     # URL: /booking/payment/123/
     path('payment/<int:booking_id>/', views.show_payment_page, name='show_payment_page'), 
+
+    # Path 4: Endpoint AJAX untuk update status card booking session 
+    # URL: booking/check-status/
+    path('check-status/', views.check_slot_status, name='check_slot_status'), 
 ]

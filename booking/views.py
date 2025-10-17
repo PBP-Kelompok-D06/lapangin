@@ -134,6 +134,50 @@ def create_booking(request):
     return JsonResponse({'message': 'Metode tidak diizinkan.'}, status=405)
 
 
+
+# View AJAX untuk Polling Status Slot
+# View ini diakses oleh JavaScript di booking.html setiap 5 detik
+def check_slot_status(request):
+    # Mengambil ID Lapangan dari request GET (wajib untuk filter)
+    lapangan_id = request.GET.get('lapangan_id')
+    
+    if not lapangan_id:
+        return JsonResponse({'error': 'Lapangand ID is required'}, status=400)
+    
+    try:
+        lapangan_terpilih = Lapangan.objects.get(pk=lapangan_id)
+    except Lapangan.DoesNotExist:
+        return JsonResponse({'error': 'Lapangan not found'}, status=404)
+
+    # Ambil SEMUA slot untuk Lapangan tersebut (minimal 7 hari ke depan)
+    # Gunakan values() untuk membuat query super ringan
+    slots_data = SlotTersedia.objects.filter(
+        lapangan=lapangan_terpilih
+    ).values(
+        'id', 
+        'is_available', 
+        'pending_booking__id' # Mengakses ID booking yang sedang pending
+    )
+    
+    # Konversi data query ke format list yang mudah diproses JSON
+    response_data = []
+    for slot in slots_data:
+        # Menentukan status display (Logic 3-Status di sisi server)
+        status = 'AVAILABLE'
+        if not slot['is_available']:
+            status = 'BOOKED'
+        elif slot['pending_booking__id'] is not None:
+            status = 'PENDING'
+            
+        response_data.append({
+            'id': slot['id'],
+            'status': status
+        })
+    
+    return JsonResponse(response_data, safe=False)
+
+
+
 # 3. show_payment_page: Menampilkan instruksi pembayaran
 @login_required 
 def show_payment_page(request, booking_id):
@@ -152,17 +196,24 @@ def show_payment_page(request, booking_id):
     if booking.status_pembayaran == 'PENDING':
         timeout_time = booking.tanggal_booking + timeout_duration
         
-        # Cek apakah sudah timeout (Logic dari View sebelumnya)
+        # Cek apakah sudah timeout 
         if timezone.now() > timeout_time:
-            # Logic Pembatalan Otomatis (Jika sudah kadaluarsa)
+            # Logic Pembatalan Otomatis
             slot_terkait = booking.slot
             if slot_terkait and slot_terkait.pending_booking == booking:
                 slot_terkait.pending_booking = None
                 slot_terkait.save()
             booking.status_pembayaran = 'CANCELLED'
             booking.save()
-            
-            messages.error(request, "Waktu pembayaran (5 menit) telah habis. Pemesanan dibatalkan.")
+
+            # bersihin pesan lama supaya gak dobel
+            storage = messages.get_messages(request)
+            storage.used = True
+
+            # Kirim pesan baru hanya kalau user masih login
+            if request.user.is_authenticated:
+                messages.error(request, "Waktu pembayaran (5 menit) telah habis. Pemesanan dibatalkan.")
+
             return redirect('booking:show_booking_page')
 
         # Kirim waktu berakhir sebagai Unix Timestamp (milidetik) ke template
@@ -172,10 +223,17 @@ def show_payment_page(request, booking_id):
         time_to_expire_ms = None
 
 
+    # --- Ambil data pemilik lapangan ---
+    pemilik = booking.slot.lapangan.pengelola
+    no_rekening = pemilik.nomor_rekening if hasattr(pemilik, 'nomor_rekening') else 'Tidak tersedia'
+    contact_whatsapp = pemilik.nomor_whatsapp if hasattr(pemilik, 'nomor_whatsapp') else 'Tidak tersedia'
+
     context = {
         'booking': booking,
-        'no_rekening': '123456789 (BCA a.n. Pengelola Lapang.in)',
-        'time_to_expire_ms': time_to_expire_ms, # mengirim countdown ke template
-        'show_navbar': True
+        'no_rekening': no_rekening,
+        'contact_whatsapp': contact_whatsapp,
+        'time_to_expire_ms': time_to_expire_ms,
+        'show_navbar': True,
     }
+
     return render(request, 'payment_detail.html', context)

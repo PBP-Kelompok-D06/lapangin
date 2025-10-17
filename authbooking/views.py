@@ -38,6 +38,10 @@ def register_user(request):
 
 def login_user(request):
     """Menangani proses login user dan redirect ke halaman 'next'."""
+    # Hapus semua pesan lama biar ga numpuk
+    storage = messages.get_messages(request)
+    storage.used = True  # tandai semua pesan sudah 'terbaca'
+    
     if request.method == 'POST':
         # AuthenticationForm harus selalu disetel ke None saat POST (kecuali saat binding)
         form = AuthenticationForm(request, data=request.POST) 
