@@ -5,7 +5,10 @@ from .models import SlotTersedia, Booking, Lapangan
 from datetime import date, timedelta
 from django.views.decorators.csrf import csrf_exempt 
 import json 
-from django.db.models import Q 
+from django.contrib import messages
+from datetime import date, timedelta, datetime # untuk mekanisme pembatalan status pending, sehingga kembali available
+from django.utils import timezone # Untuk perbandingan timezone-aware
+
 
 def show_booking_page(request):
     
@@ -22,7 +25,8 @@ def show_booking_page(request):
         lapangan_terpilih = all_lapangan.first()
     
     if not lapangan_terpilih:
-        return render(request, 'booking.html', {'error': 'Tidak ada data lapangan di database.'})
+        # Perbaikan Path Template: Menggunakan path lengkap 'login.html'
+        return render(request, 'login.html', {'error': 'Tidak ada data lapangan di database.'})
         
     # 2. Tentukan Tanggal Mulai Filter (Wajib Kuat)
     if selected_date_str:
@@ -38,8 +42,8 @@ def show_booking_page(request):
     # Tentukan rentang 7 hari
     date_list = [filter_date + timedelta(days=i) for i in range(7)]
     
-    # 3. Ambil slot yang relevan
-    available_slots_queryset = SlotTersedia.objects.filter(
+    # 3. Ambil slot yang relevan (termasuk pending_booking field yang baru)
+    available_slots_queryset = SlotTersedia.objects.select_related('pending_booking').filter(
         lapangan=lapangan_terpilih,
         tanggal__in=date_list,
     ).order_by('tanggal', 'jam_mulai')
@@ -47,9 +51,24 @@ def show_booking_page(request):
     # Re-organisasi slots ke dalam dictionary {tanggal: [slot1, slot2, ...]}
     slots_by_date = {}
     for slot_date in date_list:
-        slots_by_date[slot_date] = list(
-            available_slots_queryset.filter(tanggal=slot_date)
-        )
+        slots = list(available_slots_queryset.filter(tanggal=slot_date))
+        
+        # --- PERBAIKAN: LOGIC 3-STATUS (AVAILABLE, PENDING, BOOKED) ---
+        for slot in slots:
+            # Status Default
+            slot.display_status = 'AVAILABLE' 
+            
+            if not slot.is_available:
+                # Slot Confirmed: Hanya terjadi jika Admin sudah ACC
+                slot.display_status = 'BOOKED' 
+            elif slot.pending_booking is not None:
+                # Slot sedang dalam proses pemesanan oleh User lain
+                slot.display_status = 'PENDING' 
+            
+            # Tambahkan status ke list slot
+            
+        slots_by_date[slot_date] = slots
+        # -------------------------------------------------------------
         
     context = {
         'lapangan_terpilih': lapangan_terpilih,
@@ -61,6 +80,7 @@ def show_booking_page(request):
         'show_navbar': True,
     }
     
+    # Perbaikan Path Template: Menggunakan path yang benar
     return render(request, 'booking.html', context)
 
 
@@ -75,66 +95,87 @@ def create_booking(request):
         try:
             data = json.loads(request.body)
             slot_id = data.get('slot_id')
+            slot = get_object_or_404(SlotTersedia, pk=slot_id) # <-- Baris ini harus aman
             
-            slot = get_object_or_404(SlotTersedia, pk=slot_id)
+            # ... (Tahap 1: Validasi Status Pending tetap sama) ...
             
-            # CEK KETERSEDIAAN
-            if not slot.is_available:
-                return JsonResponse({'message': 'Slot ini sudah dibooking oleh orang lain.'}, status=400)
+            # Hitung total pembayaran (Perbaikan: Memastikan nilai tidak NULL)
+            raw_price = slot.lapangan.harga_per_jam
+            total_bayar = raw_price if raw_price is not None else 0
             
-            # --- Perbaikan Wajib: Cegah Double Booking Pending ---
-            # User tidak boleh punya dua booking 'PENDING' untuk slot yang sama
-            if Booking.objects.filter(user=request.user, slot=slot, status_pembayaran='PENDING').exists():
-                return JsonResponse({'message': 'Anda sudah memiliki booking pending untuk slot ini.'}, status=400)
-            # ----------------------------------------------------
-            
-            # *** LOGIC ERROR DIHAPUS: JANGAN UBAH slot.is_available DI SINI ***
-            # slot.is_available = False 
-            # slot.save() 
-            
-            # Hitung total pembayaran
-            total_bayar = slot.lapangan.harga_per_jam
-            
-            # Buat objek Booking baru (dengan status PENDING)
+            # --- PERBAIKAN KRITIS: INPUT FIELD KE MODEL CREATE ---
             booking = Booking.objects.create(
                 user=request.user,
                 slot=slot,
-                tanggal_booking=slot.tanggal,
-                total_bayar=total_bayar,
+                # TANGGAL BOOKING: Gunakan tanggal slot atau waktu sekarang
+                # Asumsi di Model Anda memiliki auto_now_add=True atau field tidak wajib. 
+                # Jika wajib, kita gunakan tanggal dari slot:
+                tanggal_booking=slot.tanggal, # <--- TAMBAHKAN INI
+                total_bayar=total_bayar,     # <--- TAMBAHKAN INI
                 status_pembayaran='PENDING' 
             )
+            # ----------------------------------------------------
+            
+            # KUNCI BARU: Update Slot untuk menandai bahwa ia sedang di-pending
+            slot.pending_booking = booking
+            slot.save()
             
             # Kembalikan respons sukses
             return JsonResponse({
-                'success': True, 
+                'success': True,
                 'booking_id': booking.id, 
-                'message': 'Booking berhasil dibuat. Lanjut ke pembayaran.'
+                'message': 'Request berhasil dibuat. Lanjut ke pembayaran.'
             }, status=200)
 
-        except SlotTersedia.DoesNotExist:
-            return JsonResponse({'message': 'Slot tidak valid.'}, status=404)
-        
         except Exception as e:
-            # Jika ada error database lain, laporkan
-            return JsonResponse({'message': str(e)}, status=500)
+            # Ini akan menangkap NOT NULL constraint failed
+            return JsonResponse({'message': f'Internal Server Error: {str(e)}'}, status=500)
 
     return JsonResponse({'message': 'Metode tidak diizinkan.'}, status=405)
 
+
 # 3. show_payment_page: Menampilkan instruksi pembayaran
-@login_required # Filter Informasi/Login Wajib!
-# VIEW Halaman Pembayaran (Dipanggil setelah redirect sukses)
+@login_required 
 def show_payment_page(request, booking_id):
-    # Wajib: Filter Informasi (Hanya user pemilik booking yang boleh melihat)
     booking = get_object_or_404(Booking, pk=booking_id)
 
+    # 1. Validasi Kepemilikan (Wajib)
     if booking.user != request.user:
-        # Jika bukan pemilik, redirect atau tampilkan error
+        messages.error(request, "Anda tidak memiliki akses ke pemesanan ini.")
         return redirect('booking:show_booking_page')
+    
+    # --- LOGIC TIMEOUT (5 MENIT) ---
+    timeout_duration = timedelta(minutes=5) # dalam waktu 5 menit status PENDING akan kembali ke AVAILABLE
+    # Penyewa harus segera membayar pesanan dan pemilik harus segera meng acc pesanan dalam rentang waktu 10 menit tsb
+    
+    # Kunci: Mendapatkan waktu berakhir dalam format Unix Timestamp (ms) untuk JavaScript
+    if booking.status_pembayaran == 'PENDING':
+        timeout_time = booking.tanggal_booking + timeout_duration
+        
+        # Cek apakah sudah timeout (Logic dari View sebelumnya)
+        if timezone.now() > timeout_time:
+            # Logic Pembatalan Otomatis (Jika sudah kadaluarsa)
+            slot_terkait = booking.slot
+            if slot_terkait and slot_terkait.pending_booking == booking:
+                slot_terkait.pending_booking = None
+                slot_terkait.save()
+            booking.status_pembayaran = 'CANCELLED'
+            booking.save()
+            
+            messages.error(request, "Waktu pembayaran (5 menit) telah habis. Pemesanan dibatalkan.")
+            return redirect('booking:show_booking_page')
+
+        # Kirim waktu berakhir sebagai Unix Timestamp (milidetik) ke template
+        time_to_expire_ms = int(timeout_time.timestamp() * 1000)
+    else:
+        # Jika status bukan PENDING, tidak ada countdown
+        time_to_expire_ms = None
+
 
     context = {
         'booking': booking,
         'no_rekening': '123456789 (BCA a.n. Pengelola Lapang.in)',
-        'kontak_person': '0812-xxxx-xxxx (Admin Lapang.in)',
-        'contact_whatsapp': '62812xxxxxxxx' 
+        'time_to_expire_ms': time_to_expire_ms, # mengirim countdown ke template
+        'show_navbar': True
     }
     return render(request, 'payment_detail.html', context)

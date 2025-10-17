@@ -7,7 +7,7 @@ class CustomUserCreationForm(UserCreationForm):
     role = forms.ChoiceField(
         choices=Profile.ROLES,
         label="Daftar Sebagai",
-        initial='USER',
+        initial='PENYEWA',
         widget=forms.Select(attrs={'class': 'w-full px-4 py-3 border border-gray-300 rounded-md'})
     )
 
