@@ -1,3 +1,10 @@
+'''
+File ini digunakan untuk load initial dataset yang 100 data lapangan,
+kode ini akan berinteraksi dengan booking/models.py yaitu model Lapangan,
+1. Pastiin kalian pull branch feat/booking, kalo kalian bisa buka kode ini di vscode kalian harusnya kalian udh ngelakuin pull dari branch feat/booking
+2. load data set dengan jalanin perintah ini di cmd : python manage.py load_initial_data
+'''
+
 import csv
 import os
 import io
