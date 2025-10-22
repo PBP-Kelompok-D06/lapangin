@@ -2,11 +2,11 @@
 ---
 
 ## i. Nama Anggota Kelompok 
--Kenzie Nibras Tradezqi (2406414776)
--Saikhah Ummu Anja Amalia (2406436045)
--Syifa Anabella (2406417922)
--Zibeon Jonriano Wisnumoerti (2406355634)
--Faishal Khoiriansyah Wicaksono (2406436335)
+- Kenzie Nibras Tradezqi (2406414776)
+- Saikhah Ummu Anja Amalia (2406436045)
+- Syifa Anabella (2406417922)
+- Zibeon Jonriano Wisnumoerti (2406355634)
+- Faishal Khoiriansyah Wicaksono (2406436335)
 
 ## ii. Deskripsi Aplikasi 
 Lapangin, website ini hadir dari frustasi nyata kami sebagai mahasiswa yang aktif dalam melakukan olahraga khususnya olahraga futsal, basket, dan badminton. Kami tahu betul bagaimana sulitnya menyeimbangkan antara jadwal kuliah yang padat dan kebutuhan untuk berolahraga.
@@ -80,14 +80,14 @@ Template: card/page komunitas dengan tombol “Join Group” (direct ke link eks
 Filter: Guest hanya bisa melihat daftar komunitas, join hanya setelah login.
 
 
-6. Modul Admin Dashboard 
+6. Modul User Admin and Role Management 
 Deskripsi:
     Halaman khusus Admin untuk mengelola booking, ulasan, galeri, dan komunitas.
 Implementasi:
 Model: memanfaatkan existing models (Booking, Review, Galeri, Komunitas).
 Views: dashboard ringkasan (jumlah booking, rating rata-rata, komunitas aktif).
-Template: tabel & grafik sederhana dengan Tailwind.
-
+Template: Admin dashboard, card/page komunitas, card/page lapangan, create_community, create_field.
+Filter : hanya role Admin yang dapat mengakses page ini
 
 ## iv. Sumber initial dataset kategori utama produk
 https://drive.google.com/file/d/1eK_QtY82Bna3GwvQcrdlPG-tcmi6Ijmy/view?usp=drive_link
@@ -136,5 +136,5 @@ Akses Fitur & Modul:
 - Bisa mengelola (edit/hapus) komunitas yang sudah ada.
 
 ## vi. Tautan deployment PWS dan link design
-Link Deployment PWS : https://zibeon-jonriano-lapangin.pbp.cs.ui.ac.id/
-Link Design Figma : https://www.figma.com/design/tns2TMUBqT8nJTY6pSLh3S/Lapangin?node-id=0-1&t=2XItc6nUPHshY1KH-1
+- Link Deployment PWS : https://zibeon-jonriano-lapangin.pbp.cs.ui.ac.id/
+- Link Design Figma : https://www.figma.com/design/tns2TMUBqT8nJTY6pSLh3S/Lapangin?node-id=0-1&t=2XItc6nUPHshY1KH-1
