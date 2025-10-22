@@ -30,8 +30,8 @@ class CustomUserCreationForm(UserCreationForm):
                 'placeholder': placeholder_text,
             })
     
-    def clean_nomor_whatsapp(self):
-        role = self.cleaned_data.get('role','')
+    def clean_nomor_whatsapp(self): # validasi format no wa
+        role = self.cleaned_data.get('role','') # handle kasus ketika no wa ga diisi (in case PENYEWA)
         if (role == 'PENYEWA'):
             return
 

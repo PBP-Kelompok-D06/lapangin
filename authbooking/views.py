@@ -5,34 +5,44 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .forms import CustomUserCreationForm 
+from .forms import CustomUserCreationForm
+from .models import Profile 
 
 # --- VIEWS AUTHENTIKASI ---
 
 def register_user(request):
     """Menangani proses registrasi user baru dengan pilihan Role."""
     if request.method == 'POST':
-        # Menggunakan Form kustom yang menangani field Role
-        form = CustomUserCreationForm(request.POST) 
-        
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user) 
-            # Menggunakan f-string untuk menampilkan Role (Sesuai Logic Model Anda)
-            messages.success(request, f"Akun {user.username} berhasil dibuat! Role: {user.profile.get_role_display()}.")
-            
-            # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
-            return redirect('/')
+            user = form.save(commit=False)
+            user.save()
+
+            # Buat Profile baru berdasarkan data dari form
+            Profile.objects.create(
+                user=user,
+                role=form.cleaned_data.get('role'),
+                nomor_rekening=form.cleaned_data.get('nomor_rekening'),
+                nomor_whatsapp=form.cleaned_data.get('nomor_whatsapp')
+            )
+
+            login(request, user)
+            messages.success(
+                request,
+                f"Akun {user.username} berhasil dibuat! Role: {user.profile.get_role_display()}."
+            )
+            # Redirect berdasarkan role
+            profile = Profile.objects.get(user=user)
+            if profile.role == 'PEMILIK':
+                return redirect('admin_dashboard:dashboard_home') # kalo dia register sebagai PEMILIK diarahin ke dashboard
+            else:
+                return redirect('/') # kalo dia register sebagai PENYEWA diarahin ke landing page
         else:
             messages.error(request, "Registrasi gagal. Mohon periksa input Anda.")
     else:
         form = CustomUserCreationForm()
 
-    context = {
-        'form': form,
-        'show_navbar': False # Untuk styling halaman penuh
-    }
-    # Perbaikan Path Template: Menggunakan path yang benar 'register.html'
+    context = {'form': form, 'show_navbar': False}
     return render(request, 'register.html', context)
 
 
@@ -51,10 +61,20 @@ def login_user(request):
             login(request, user)
             messages.success(request, f"Selamat datang kembali, {user.username}.")
             
-            # Perbaikan: Mengambil URL 'next' untuk redirect setelah login
-            # Jika user datang dari /accounts/login/?next=/booking/create/, ia akan kembali ke sana.
-            next_url = request.GET.get('next', '/') # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
-            return redirect(next_url)
+            # Redirect berdasarkan role
+            try:
+                profile = Profile.objects.get(user=user)
+            except Profile.DoesNotExist:
+                messages.error(request, "Profil Anda belum lengkap. Silakan hubungi admin.")
+                return redirect('/')
+            
+            if profile.role == 'PEMILIK':
+                return redirect('admin_dashboard:dashboard_home') # kalo dia register sebagai PEMILIK diarahin ke dashboard
+            else:
+                # Perbaikan: Mengambil URL 'next' untuk redirect setelah login
+                # Jika user datang dari /accounts/login/?next=/booking/create/, ia akan kembali ke sana.
+                next_url = request.GET.get('next', '/') # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
+                return redirect(next_url) # kalo dia register sebagai PENYEWA diarahin ke landing page
 
     else:
         # Menangani GET request
