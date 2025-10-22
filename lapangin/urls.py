@@ -23,7 +23,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('dashboard/', include('admin_dashboard.urls')),
     path('komunitas/', include('komunitas.urls')),
-]
+    path('booking/', include('booking.urls')), 
+    path('accounts/', include('authbooking.urls')), 
+    ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

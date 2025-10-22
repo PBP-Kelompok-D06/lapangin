@@ -1,99 +1,99 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Count, Avg
-from .models import Lapangan, VarianLapangan, WarnaLapangan, KategoriLapangan, GaleriLapangan
-from komunitas.models import Komunitas, RequestKomunitas
+from django.db.models import Count, Q
 from django.http import JsonResponse
-import json
 
-def is_admin(user):
-    return user.is_staff or user.groups.filter(name='Admin').exists()
+# Import dari BOOKING models (bukan admin_dashboard models)
+from booking.models import Booking, SlotTersedia, Lapangan
+from komunitas.models import Komunitas, RequestKomunitas
 
-@login_required
-@user_passes_test(is_admin)
+# Decorator untuk cek role PEMILIK
+def is_pemilik(user):
+    """Cek apakah user adalah PEMILIK lapangan"""
+    return hasattr(user, 'profile') and user.profile.role == 'PEMILIK'
+
+# Decorator gabungan
+def pemilik_required(view_func):
+    """Decorator untuk memastikan user adalah PEMILIK"""
+    from django.contrib.auth.decorators import user_passes_test
+    decorated_view = login_required(user_passes_test(is_pemilik, login_url='/accounts/login/')(view_func))
+    return decorated_view
+
+
+# ==================== DASHBOARD HOME ====================
+@pemilik_required
 def dashboard_home(request):
-    """Halaman utama dashboard dengan overview produk"""
+    """Halaman utama dashboard dengan overview"""
+    # Hitung total lapangan milik pemilik ini
+    total_lapangan = Lapangan.objects.filter(pengelola=request.user.profile).count()
+    
+    # Hitung total komunitas yang dibuat
+    total_komunitas = Komunitas.objects.filter(dibuat_oleh=request.user).count()
+    
+    # Hitung booking pending untuk lapangan milik pemilik ini
+    pending_bookings = Booking.objects.filter(
+        slot__lapangan__pengelola=request.user.profile,
+        status_pembayaran='PENDING'
+    ).count()
+    
     context = {
-        'total_lapangan': Lapangan.objects.filter(pemilik=request.user).count(),
-        'total_komunitas': Komunitas.objects.filter(dibuat_oleh=request.user).count(),
+        'total_lapangan': total_lapangan,
+        'total_komunitas': total_komunitas,
         'pending_requests': RequestKomunitas.objects.filter(status='pending').count(),
+        'pending_bookings': pending_bookings,  # Tambahan untuk notifikasi
     }
     return render(request, 'admin_dashboard/dashboard_home.html', context)
 
 
-@login_required
-@user_passes_test(is_admin)
+# ==================== LAPANGAN MANAGEMENT ====================
+@pemilik_required
 def lapangan_list(request):
-    """Menampilkan daftar semua lapangan milik admin"""
+    """Menampilkan daftar semua lapangan milik pemilik"""
     jenis_filter = request.GET.get('jenis', '')
     lokasi_filter = request.GET.get('lokasi', '')
     
-    lapangan_list = Lapangan.objects.filter(pemilik=request.user)
+    # Filter hanya lapangan milik pemilik yang login
+    lapangan_list = Lapangan.objects.filter(pengelola=request.user.profile)
     
     if jenis_filter:
-        lapangan_list = lapangan_list.filter(jenis=jenis_filter)
+        lapangan_list = lapangan_list.filter(jenis_olahraga=jenis_filter)
     if lokasi_filter:
         lapangan_list = lapangan_list.filter(lokasi__icontains=lokasi_filter)
     
+    # Choices untuk jenis olahraga
+    jenis_choices = [
+        ('Futsal', 'Futsal'),
+        ('Bulutangkis', 'Bulutangkis'),
+        ('Basket', 'Basket'),
+    ]
+    
     context = {
         'lapangan_list': lapangan_list,
-        'jenis_choices': Lapangan.JENIS_CHOICES,
+        'jenis_choices': jenis_choices,
     }
     return render(request, 'admin_dashboard/lapangan_list.html', context)
 
 
-@login_required
-@user_passes_test(is_admin)
+@pemilik_required
 def lapangan_create(request):
     """Form untuk membuat lapangan baru"""
     if request.method == 'POST':
         try:
-            # Ambil data dari form
+            # Buat lapangan baru dengan pengelola = profile pemilik yang login
             lapangan = Lapangan.objects.create(
-                nama=request.POST.get('nama'),
-                jenis=request.POST.get('jenis'),
+                nama_lapangan=request.POST.get('nama'),
+                jenis_olahraga=request.POST.get('jenis'),
                 lokasi=request.POST.get('lokasi'),
                 harga_per_jam=request.POST.get('harga'),
                 deskripsi=request.POST.get('deskripsi', ''),
                 fasilitas=request.POST.get('fasilitas', ''),
-                pemilik=request.user
+                pengelola=request.user.profile  # Set pengelola
             )
             
             if request.FILES.get('foto_utama'):
                 lapangan.foto_utama = request.FILES['foto_utama']
                 lapangan.save()
-            
-            # Handle varian
-            varian_data = request.POST.getlist('varian[]')
-            stock_data = request.POST.getlist('stock[]')
-            for varian, stock in zip(varian_data, stock_data):
-                if varian:
-                    VarianLapangan.objects.create(
-                        lapangan=lapangan,
-                        ukuran=varian,
-                        stock=int(stock) if stock else 1
-                    )
-            
-            # Handle warna
-            warna_names = request.POST.getlist('warna_nama[]')
-            warna_hex = request.POST.getlist('warna_hex[]')
-            for nama, hex_code in zip(warna_names, warna_hex):
-                if nama and hex_code:
-                    WarnaLapangan.objects.create(
-                        lapangan=lapangan,
-                        nama_warna=nama,
-                        kode_hex=hex_code
-                    )
-            
-            # Handle kategori
-            kategori_data = request.POST.getlist('kategori[]')
-            for kategori in kategori_data:
-                if kategori:
-                    KategoriLapangan.objects.create(
-                        lapangan=lapangan,
-                        nama_kategori=kategori
-                    )
             
             messages.success(request, 'Lapangan berhasil ditambahkan!')
             return redirect('admin_dashboard:lapangan_list')
@@ -101,23 +101,27 @@ def lapangan_create(request):
         except Exception as e:
             messages.error(request, f'Terjadi kesalahan: {str(e)}')
     
+    jenis_choices = [
+        ('Futsal', 'Futsal'),
+        ('Bulutangkis', 'Bulutangkis'),
+        ('Basket', 'Basket'),
+    ]
+    
     context = {
-        'jenis_choices': Lapangan.JENIS_CHOICES,
-        'ukuran_choices': VarianLapangan.UKURAN_CHOICES,
+        'jenis_choices': jenis_choices,
     }
     return render(request, 'admin_dashboard/lapangan_form.html', context)
 
 
-@login_required
-@user_passes_test(is_admin)
+@pemilik_required
 def lapangan_edit(request, pk):
     """Edit lapangan yang sudah ada"""
-    lapangan = get_object_or_404(Lapangan, pk=pk, pemilik=request.user)
+    lapangan = get_object_or_404(Lapangan, pk=pk, pengelola=request.user.profile)
     
     if request.method == 'POST':
         try:
-            lapangan.nama = request.POST.get('nama')
-            lapangan.jenis = request.POST.get('jenis')
+            lapangan.nama_lapangan = request.POST.get('nama')
+            lapangan.jenis_olahraga = request.POST.get('jenis')
             lapangan.lokasi = request.POST.get('lokasi')
             lapangan.harga_per_jam = request.POST.get('harga')
             lapangan.deskripsi = request.POST.get('deskripsi', '')
@@ -134,19 +138,23 @@ def lapangan_edit(request, pk):
         except Exception as e:
             messages.error(request, f'Terjadi kesalahan: {str(e)}')
     
+    jenis_choices = [
+        ('Futsal', 'Futsal'),
+        ('Bulutangkis', 'Bulutangkis'),
+        ('Basket', 'Basket'),
+    ]
+    
     context = {
         'lapangan': lapangan,
-        'jenis_choices': Lapangan.JENIS_CHOICES,
-        'ukuran_choices': VarianLapangan.UKURAN_CHOICES,
+        'jenis_choices': jenis_choices,
     }
     return render(request, 'admin_dashboard/lapangan_form.html', context)
 
 
-@login_required
-@user_passes_test(is_admin)
+@pemilik_required
 def lapangan_delete(request, pk):
     """Hapus lapangan"""
-    lapangan = get_object_or_404(Lapangan, pk=pk, pemilik=request.user)
+    lapangan = get_object_or_404(Lapangan, pk=pk, pengelola=request.user.profile)
     
     if request.method == 'POST':
         lapangan.delete()
@@ -154,3 +162,109 @@ def lapangan_delete(request, pk):
         return redirect('admin_dashboard:lapangan_list')
     
     return render(request, 'admin_dashboard/lapangan_confirm_delete.html', {'lapangan': lapangan})
+
+
+# ==================== BOOKING MANAGEMENT (NEW!) ====================
+@pemilik_required
+def booking_pending_list(request):
+    """Menampilkan daftar booking PENDING untuk di-approve/reject"""
+    # Filter booking PENDING untuk lapangan milik pemilik yang login
+    pending_bookings = Booking.objects.filter(
+        slot__lapangan__pengelola=request.user.profile,
+        status_pembayaran='PENDING'
+    ).select_related('user', 'slot', 'slot__lapangan').order_by('-tanggal_booking')
+    
+    context = {
+        'pending_bookings': pending_bookings,
+    }
+    return render(request, 'admin_dashboard/booking_pending_list.html', context)
+
+
+@pemilik_required
+def booking_approve(request, pk):
+    """Approve booking (PENDING → PAID, slot jadi BOOKED)"""
+    booking = get_object_or_404(
+        Booking, 
+        pk=pk, 
+        slot__lapangan__pengelola=request.user.profile,
+        status_pembayaran='PENDING'
+    )
+    
+    if request.method == 'POST':
+        try:
+            # Update status booking jadi PAID
+            booking.status_pembayaran = 'PAID'
+            booking.save()
+            
+            # Update slot jadi BOOKED (is_available = False)
+            slot = booking.slot
+            slot.is_available = False
+            slot.pending_booking = None  # Clear pending
+            slot.save()
+            
+            messages.success(request, f'Booking #{booking.id} berhasil di-approve!')
+            return redirect('admin_dashboard:booking_pending')
+            
+        except Exception as e:
+            messages.error(request, f'Terjadi kesalahan: {str(e)}')
+    
+    context = {
+        'booking': booking,
+    }
+    return render(request, 'admin_dashboard/booking_approve_confirm.html', context)
+
+
+@pemilik_required
+def booking_reject(request, pk):
+    """Reject booking (PENDING → CANCELLED, slot jadi AVAILABLE)"""
+    booking = get_object_or_404(
+        Booking, 
+        pk=pk, 
+        slot__lapangan__pengelola=request.user.profile,
+        status_pembayaran='PENDING'
+    )
+    
+    if request.method == 'POST':
+        try:
+            # Update status booking jadi CANCELLED
+            booking.status_pembayaran = 'CANCELLED'
+            booking.save()
+            
+            # Update slot jadi AVAILABLE lagi
+            slot = booking.slot
+            slot.is_available = True
+            slot.pending_booking = None  # Clear pending
+            slot.save()
+            
+            messages.success(request, f'Booking #{booking.id} berhasil ditolak!')
+            return redirect('admin_dashboard:booking_pending')
+            
+        except Exception as e:
+            messages.error(request, f'Terjadi kesalahan: {str(e)}')
+    
+    context = {
+        'booking': booking,
+    }
+    return render(request, 'admin_dashboard/booking_reject_confirm.html', context)
+
+
+@pemilik_required
+def transaksi_list(request):
+    """Menampilkan riwayat transaksi (PAID & CANCELLED)"""
+    status_filter = request.GET.get('status', '')
+    
+    # Filter transaksi untuk lapangan milik pemilik yang login
+    transaksi = Booking.objects.filter(
+        slot__lapangan__pengelola=request.user.profile
+    ).exclude(
+        status_pembayaran='PENDING'  # Exclude yang masih pending
+    ).select_related('user', 'slot', 'slot__lapangan').order_by('-tanggal_booking')
+    
+    if status_filter:
+        transaksi = transaksi.filter(status_pembayaran=status_filter)
+    
+    context = {
+        'transaksi': transaksi,
+        'status_filter': status_filter,
+    }
+    return render(request, 'admin_dashboard/transaksi_list.html', context)

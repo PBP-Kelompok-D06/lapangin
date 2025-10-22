@@ -4,9 +4,20 @@ from . import views
 app_name = 'admin_dashboard'
 
 urlpatterns = [
+    # Dashboard Home
     path('', views.dashboard_home, name='dashboard_home'),
+    
+    # Lapangan Management
     path('lapangan/', views.lapangan_list, name='lapangan_list'),
     path('lapangan/create/', views.lapangan_create, name='lapangan_create'),
     path('lapangan/<int:pk>/edit/', views.lapangan_edit, name='lapangan_edit'),
     path('lapangan/<int:pk>/delete/', views.lapangan_delete, name='lapangan_delete'),
+    
+    # Booking Management (NEW!)
+    path('booking/', views.booking_pending_list, name='booking_pending'),
+    path('booking/<int:pk>/approve/', views.booking_approve, name='booking_approve'),
+    path('booking/<int:pk>/reject/', views.booking_reject, name='booking_reject'),
+    
+    # Transaksi/Riwayat (NEW!)
+    path('transaksi/', views.transaksi_list, name='transaksi_list'),
 ]
