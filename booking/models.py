@@ -1,8 +1,6 @@
-# booking/models.py (Disimpan di Lapangin/booking/models.py)
-
 from django.db import models
 from django.contrib.auth.models import User
-from authbooking.models import Profile # <-- WAJIB: Import Model Profile Anda
+from authbooking.models import Profile 
 
 
 # 1. Model untuk Lapangan (Data Statis dari CSV)
