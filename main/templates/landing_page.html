@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lapang.in - Booking Lapangan Gak Pake Drama!{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section id="hero" class="relative w-full h-[55vh] sm:h-[60vh] md:h-[65vh] lg:h-[70vh] flex items-center px-4 md:px-10 justify-start text-left text-white overflow-hidden mt-4 md:mt-10 rounded-sm">
+  <img id="hero-image"
+       src="{% static 'images/image_header1.png' %}" 
+       alt="Lapangan Olahraga" 
+       class="absolute inset-0 w-full h-full object-cover brightness-50 transition-opacity duration-1000 rounded-xl"
+       onerror="this.onerror=null;this.src='https://via.placeholder.com/1600x900?text=Lapang.in';">
+
+  <div class="relative z-10 px-2 md:px-4">
+    <h1 class="text-4xl md:text-6xl font-bold mb-2">Booking Lapangan</h1>
+    <h1 class="text-4xl md:text-6xl font-bold mb-2">Gak Pake Drama!</h1>
+    <p class="text-md md:text-xl font-light mb-6">Cari lapangan, pilih jadwal, langsung main!</p>
+    <a href="{% url 'booking:show_booking_page' %}" 
+       class="bg-[#a7bf6e] hover:bg-[#4f4f4f] text-white font-semibold py-3 px-8 rounded-md shadow-md transition">
+       Explore
+    </a>
+  </div>
+</section>
+
+<!-- Fasilitas Section -->
+<section class="w-full md:mt-6 bg-white py-12 sm:py-16 px-4 sm:px-6 text-center rounded-xl">
+  <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-8 sm:mb-10">
+    Akses lapangan favoritmu dengan berbagai fasilitas lengkap
+  </h2>
+
+  <!-- Fasilitas Icon -->
+  <div class="grid grid-cols-3 md:grid-cols-6 gap-6 sm:gap-8 justify-center items-center">
+    <div class="flex flex-col items-center">
+      <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
+        <i class="fas fa-wifi text-4xl md:text-5xl text-gray-600"></i>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-center">
+      <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
+        <i class="fas fa-mosque text-4xl md:text-5xl text-gray-600"></i>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-center">
+      <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
+        <i class="fas fa-door-open text-4xl md:text-5xl text-gray-600"></i>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-center">
+      <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
+        <i class="fas fa-toilet text-4xl md:text-5xl text-gray-600"></i>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-center">
+      <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
+        <i class="fas fa-utensils text-4xl md:text-5xl text-gray-600"></i>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-center">
+      <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
+        <i class="fas fa-parking text-4xl md:text-5xl text-gray-600"></i>
+      </div>
+    </div>
+  </div>
+
+
+
+  <p class="mt-10 text-gray-700 max-w-3xl mx-auto leading-relaxed text-sm sm:text-base md:text-lg">
+    Berikut Venue <span class="text-[#a7bf6e] font-semibold">Olahraga Futsal</span>, 
+    <span class="text-[#a7bf6e] font-semibold">Basket</span> dan 
+    <span class="text-[#a7bf6e] font-semibold">Bulu Tangkis</span> di 
+    <span class="text-[#a7bf6e] font-semibold">Semua Kota</span> yang sudah memenuhi standar kualitas terbaik 
+    untuk memanjakan pengalamanmu bermain.
+  </p>
+</section>
+
+<!-- Script untuk carousel -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const heroImage = document.getElementById("hero-image");
+    const images = [
+      "{% static 'images/image_header1.png' %}",
+      "{% static 'images/image_header2.png' %}",
+      "{% static 'images/image_header3.png' %}"
+    ];
+    let index = 0;
+
+    setInterval(() => {
+      // Fade out
+      heroImage.classList.add("opacity-0");
+
+      setTimeout(() => {
+        // Ganti gambar setelah fade out
+        index = (index + 1) % images.length;
+        heroImage.src = images[index];
+
+        // Fade in
+        heroImage.classList.remove("opacity-0");
+      }, 500);
+    }, 10000); // Ganti gambar setiap 4 detik
+  });
+</script>
+{% endblock %}
