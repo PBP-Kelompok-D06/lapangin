@@ -12,7 +12,7 @@ class Lapangan(models.Model):
         Profile, 
         on_delete=models.CASCADE, # <--- JIKA PROFILE ADMIN DIHAPUS, LAPANGAN AKAN IKUT TERHAPUS
         related_name='lapangan_dikelola',
-        limit_choices_to={'role': 'ADMIN'}, # Hanya Profile dengan Role 'ADMIN' yang bisa memilih
+        limit_choices_to={'role': 'PEMILIK'}, # Hanya Profile dengan Role 'PEMILIK' yang bisa memilih
         null=True, 
         blank=True
     )
@@ -41,6 +41,16 @@ class SlotTersedia(models.Model):
     jam_mulai = models.TimeField()
     jam_akhir = models.TimeField()
     is_available = models.BooleanField(default=True)
+
+    # NEW FIELD: Untuk menampung Foreign Key ke Booking yang sedang pending
+    # Ini adalah kunci untuk menampilkan status PENDING di card user lain
+    pending_booking = models.OneToOneField(
+        'Booking',
+        on_delete=models.SET_NULL,
+        related_name='slot_reserved_by_pending',
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return f'{self.lapangan.nama_lapangan} - {self.tanggal} {self.jam_mulai.strftime("%H:%M")}'

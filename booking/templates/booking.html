@@ -88,9 +88,9 @@
                             {% for slot in slots %}
                                 <div 
                                     data-slot-id="{{ slot.id }}"
-                                    data-available="{{ slot.is_available|lower }}"
+                                    data-available="{% if slot.display_status == 'AVAILABLE' %}true{% else %}false{% endif %}"
                                     class="slot-card p-2 rounded-lg border border-gray-300 text-center 
-                                           {% if slot.is_available %}cursor-pointer hover:shadow-lg transition duration-150{% else %}unavailable{% endif %}">
+                                    {% if slot.display_status == 'AVAILABLE' %}cursor-pointer hover:shadow-lg transition duration-150{% else %}unavailable{% endif %}">
                                     
                                     <p class="text-sm font-semibold mb-1 
                                             {% if slot.is_available %}text-gray-800{% else %}text-gray-500{% endif %}">
@@ -106,8 +106,10 @@
                                     </p>
 
                                     <span class="text-xs font-bold uppercase mt-2 px-2 py-0.5 rounded 
-                                        {% if slot.is_available %}bg-yellow-100 text-yellow-600{% else %}bg-red-100 text-red-600{% endif %}">
-                                        {% if slot.is_available %}AVAILABLE{% else %}BOOKED{% endif %}
+                                        {% if slot.display_status == 'AVAILABLE' %}bg-green-200 text-green-700
+                                        {% elif slot.display_status == 'PENDING' %}bg-yellow-200 text-yellow-700 
+                                        {% else %}bg-red-200 text-red-700{% endif %}">
+                                        {{ slot.display_status }}
                                     </span>
                                 </div>
                             {% endfor %}
@@ -209,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ slot_id: selectedSlotId })
             });
 
-            // 🧩 Deteksi: kalau Django redirect ke login (HTML)
+            //  Deteksi: kalau Django redirect ke login (HTML)
             const contentType = response.headers.get("content-type") || "";
             if (contentType.includes("text/html")) {
                 modal.classList.remove('hidden');
@@ -245,5 +247,76 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('flex');
     });
 });
+
+const pollingInterval = 5000; // 5 detik
+    
+const updateCardStatus = (slotId, newStatus) => {
+    const card = document.querySelector(`.slot-card[data-slot-id="${slotId}"]`);
+    if (!card) return;
+
+    const badge = card.querySelector('span'); // ambil elemen badge status
+    if (!badge) return;
+
+    // Hapus style lama di card & badge
+    card.classList.remove(
+        'selected', 'available', 'unavailable', 
+        'border-primary', 'bg-green-50', 
+        'border-yellow-500', 'bg-yellow-100',
+        'border-red-500', 'bg-red-100'
+    );
+    badge.classList.remove(
+        'bg-green-200', 'text-green-700',
+        'bg-yellow-200', 'text-yellow-700',
+        'bg-red-200', 'text-red-700'
+    );
+
+    // Update data-attribute
+    card.dataset.available = (newStatus === 'AVAILABLE' ? 'true' : 'false');
+
+    // Terapkan style baru sesuai status
+    if (newStatus === 'PENDING') {
+        card.classList.add('unavailable', 'border-yellow-500', 'bg-[rgba(232,201,0,0.1)]');
+        badge.classList.add('bg-yellow-200', 'text-yellow-700');
+        badge.textContent = 'PENDING';
+    } else if (newStatus === 'BOOKED') {
+        card.classList.add('unavailable', 'border-red-500', 'bg-red-50');
+        badge.classList.add('bg-red-200', 'text-red-700');
+        badge.textContent = 'BOOKED';
+    } else {
+        card.classList.add('available', 'cursor-pointer');
+        badge.classList.add('bg-green-200', 'text-green-700');
+        badge.textContent = 'AVAILABLE';
+    }
+};
+
+
+const pollStatus = async () => {
+    // Ambil Lapangan ID yang sedang dilihat User 2 dari filter dropdown
+    const lapanganSelect = document.getElementById('lapangan_id_filter');
+    if (!lapanganSelect) return;
+        
+    const currentLapanganId = lapanganSelect.value; 
+        
+    try {
+        const response = await fetch(`{% url 'booking:check_slot_status' %}?lapangan_id=${currentLapanganId}`);
+        if (!response.ok) throw new Error('Polling failed');
+            
+        const slotsData = await response.json();
+
+        slotsData.forEach(slot => {
+            // Update status di browser User 2
+            updateCardStatus(slot.id, slot.status);
+        });
+            
+    } catch (error) {
+        console.error("Error Polling:", error);
+    }
+};
+    
+// Mulai Polling setelah halaman selesai dimuat
+if (document.getElementById('lapangan_id_filter')) {
+    setInterval(pollStatus, pollingInterval);
+}
+// ----------------------------------------
 </script>
 {% endblock extra_script %}
