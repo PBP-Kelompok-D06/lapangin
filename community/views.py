@@ -17,10 +17,13 @@ def show_community_page(request):
 def community_detail(request, pk):
     community = get_object_or_404(Community, pk=pk)
     communities = Community.objects.exclude(pk=pk)  # biar gak nampilin dirinya sendiri
-    return render(request, 'community_detail.html', {
+
+    context = {
         'community': community,
-        'communities': communities
-    })
+        'communities': communities,
+        'show_navbar': True  # Menambahkan konteks untuk menampilkan navbar
+    }
+    return render(request, 'community_detail.html', context)
 
 def search_communities(request):
     query = request.GET.get('q')
