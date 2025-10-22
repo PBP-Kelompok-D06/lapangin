@@ -3,6 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .forms import CustomUserCreationForm 
+from .models import Profile 
 
 # --- VIEWS AUTHENTIKASI ---
 
@@ -13,14 +14,24 @@ def register_user(request):
         
         if form.is_valid():
             user = form.save()
-            login(request, user) 
+            
+            # PERBAIKAN: Cek apakah Profile sudah ada, kalau belum buat
+            if not hasattr(user, 'profile'):
+                Profile.objects.create(
+                    user=user,
+                    role=form.cleaned_data['role'],
+                    nomor_rekening=form.cleaned_data.get('nomor_rekening', ''),
+                    nomor_whatsapp=form.cleaned_data.get('nomor_whatsapp', '')
+                )
+            
+            login(request, user)
             messages.success(request, f"Akun {user.username} berhasil dibuat! Role: {user.profile.get_role_display()}.")
             
             # REDIRECT BERDASARKAN ROLE
             if user.profile.role == 'PEMILIK':
                 return redirect('/dashboard/')  # Ke Admin Dashboard
             else:  # PENYEWA
-                return redirect('/')  # Ke Landing Page (error dulu gapapa)
+                return redirect('/')  # Ke Landing Page
         else:
             messages.error(request, "Registrasi gagal. Mohon periksa input Anda.")
     else:
