@@ -31,6 +31,10 @@ class CustomUserCreationForm(UserCreationForm):
             })
     
     def clean_nomor_whatsapp(self):
+        role = self.cleaned_data.get('role','')
+        if (role == 'PENYEWA'):
+            return
+
         nomor = self.cleaned_data.get('nomor_whatsapp', '').strip()
 
         # Jika user isi 0812..., ubah ke +62812...
