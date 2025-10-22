@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen">
+  <!-- Hero Section -->
+  <div class="relative w-full h-96 overflow-hidden">
+    {% if community.community_image %}
+      <img src="{{ community.community_image.url }}" alt="{{ community.community_name }}" class="object-cover w-full h-full">
+    {% else %}
+      <img src="{% static 'images/default_community.jpg' %}" alt="default" class="object-cover w-full h-full">
+    {% endif %}
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Content -->
+    <div class="lg:col-span-2">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ community.community_name }}</h1>
+      <p class="text-gray-600 text-sm mb-4">
+        {{ community.sports_type }} • <span class="text-yellow-600 font-semibold">{{ community.location }}</span>
+      </p>
+      <div class="flex items-center text-gray-700 mb-4">
+        <i class="fa fa-users mr-2 text-green-600"></i>
+        <span>{{ community.member_count }}</span>
+      </div>
+
+      <p class="text-gray-700 leading-relaxed mb-8">
+        {{ community.description }}
+      </p>
+
+      <!-- Media Sosial -->
+      <div class="mt-6">
+        <h3 class="text-lg font-semibold mb-2">Media Sosial</h3>
+        <div class="flex items-center gap-4">
+          <a href="#" class="text-pink-600 text-2xl hover:text-pink-800">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="#" class="text-green-600 text-2xl hover:text-green-800">
+            <i class="fab fa-whatsapp"></i>
+          </a>
+          <p class="text-gray-700 text-sm">@{{ community.community_name|lower|cut:" " }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar (Join Box) -->
+    <div class="bg-white rounded-2xl shadow-md p-6 h-fit">
+      <h3 class="text-lg font-semibold mb-3 text-gray-800">Bergabung</h3>
+      <p class="text-gray-600 mb-4 text-sm">
+        {{ community.description|truncatewords:20 }}
+      </p>
+      <a href="#" class="block w-full text-center bg-lime-600 hover:bg-lime-700 text-white font-semibold py-2 rounded-lg transition">
+        Daftar
+      </a>
+    </div>
+  </div>
+
+  <!-- Komunitas Lainnya -->
+  <div class="max-w-7xl mx-auto px-6 pb-16">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Komunitas Lainnya</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for other in communities %}
+        {% if other.id != community.id %}
+        <div class="bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden">
+          {% if other.community_image %}
+            <img src="{{ other.community_image.url }}" class="w-full h-40 object-cover" alt="{{ other.community_name }}">
+          {% else %}
+            <img src="{% static 'images/default_community.jpg' %}" class="w-full h-40 object-cover" alt="default">
+          {% endif %}
+          <div class="p-4">
+            <h3 class="text-lg font-semibold">{{ other.community_name }}</h3>
+            <p class="text-gray-500 text-sm mb-2">
+              {{ other.sports_type }} • <span class="text-yellow-600">{{ other.location }}</span>
+            </p>
+            <p class="text-sm text-gray-600 mb-2">Join kuy</p>
+            <div class="flex justify-between items-center text-sm text-gray-500">
+              <span>👥 {{ other.member_count }}</span>
+              <a href="{% url 'show_detail_community' other.pk %}" class="text-lime-700 font-medium hover:underline">Cek Komunitas →</a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

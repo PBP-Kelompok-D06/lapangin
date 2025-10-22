@@ -1,45 +1,26 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from main.forms import CommunityForm
-from main.models import Community
+# from community.forms import CommunityForm
+from community.models import Community
 from django.http import HttpResponse
 from django.core import serializers
 
 
-def create_community(request):
-    if request.method == 'POST':
-        form = CommunityForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('community_list')  # Redirect to a community list view after creation
-    else:
-        form = CommunityForm()
-    return render(request, 'create_community.html', {'form': form})
-
-def community_list(request):
+def show_community_page(request):
     communities = Community.objects.all()
-    return render(request, 'community.html', {'communities': communities})
+    context = {
+        'communities': communities,
+        'show_navbar': True  # Menambahkan konteks untuk menampilkan navbar
+    }
+    
+    return render(request, 'community.html', context)
 
 def community_detail(request, pk):
     community = get_object_or_404(Community, pk=pk)
-    return render(request, 'community_detail.html', {'community': community})
-
-def edit_community(request, pk):
-    community = get_object_or_404(Community, pk=pk)
-    if request.method == 'POST':
-        form = CommunityForm(request.POST, request.FILES, instance=community)
-        if form.is_valid():
-            form.save()
-            return redirect('community_detail', pk=community.pk)
-    else:
-        form = CommunityForm(instance=community)
-    return render(request, 'edit_community.html', {'form': form})
-
-def delete_community(request, pk):
-    community = get_object_or_404(Community, pk=pk)
-    if request.method == 'POST':
-        community.delete()
-        return redirect('community_list')
-    return render(request, 'delete_community.html', {'community': community})
+    communities = Community.objects.exclude(pk=pk)  # biar gak nampilin dirinya sendiri
+    return render(request, 'community_detail.html', {
+        'community': community,
+        'communities': communities
+    })
 
 def search_communities(request):
     query = request.GET.get('q')
@@ -60,7 +41,7 @@ def join_community(request, pk):
         community.save()
         return redirect('community_detail', pk=community.pk)
     else:
-        return render(request, 'community_full.html', {'community': community})
+        return render(request, 'community.html', {'community': community})
 
 def show_xml(request):
     data = serializers.serialize("xml", Community.objects.all())

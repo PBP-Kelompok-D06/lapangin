@@ -1,9 +1,9 @@
 import uuid
 from django.db import models
+from authbooking.models import Profile
 
 class Community(models.Model):
     CATEGORY_CHOICES = [
-        ('padel', 'Padel'),
         ('futsal', 'Futsal'),
         ('bulutangkis', 'Bulutangkis'),
         ('basket', 'Basket'),
@@ -19,3 +19,6 @@ class Community(models.Model):
     contact_phone = models.CharField(max_length=20)
     community_image = models.ImageField(upload_to='community_images/', null=True, blank=True)
     date_added = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return self.community_name
