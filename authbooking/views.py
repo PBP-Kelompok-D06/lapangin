@@ -1,79 +1,104 @@
-from django.shortcuts import redirect, render
-from django.contrib.auth.forms import UserCreationForm,  AuthenticationForm
-from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .forms import CustomUserCreationForm 
+from django.http import JsonResponse
+from .forms import CustomUserCreationForm
+from .models import Profile
 
-# --- VIEWS AUTHENTIKASI ---
 
+# --- REGISTER AJAX ---
 def register_user(request):
-    """Menangani proses registrasi user baru dengan pilihan Role."""
-    if request.method == 'POST':
-        # Menggunakan Form kustom yang menangani field Role
-        form = CustomUserCreationForm(request.POST) 
-        
+    """Menangani registrasi user baru (AJAX + GET render)."""
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user) 
-            # Menggunakan f-string untuk menampilkan Role (Sesuai Logic Model Anda)
-            messages.success(request, f"Akun {user.username} berhasil dibuat! Role: {user.profile.get_role_display()}.")
-            
-            # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
-            return redirect('/')
+            user = form.save(commit=False)
+            user.save()
+
+            # Buat profile baru
+            Profile.objects.create(
+                user=user,
+                role=form.cleaned_data.get('role'),
+                nomor_rekening=form.cleaned_data.get('nomor_rekening'),
+                nomor_whatsapp=form.cleaned_data.get('nomor_whatsapp')
+            )
+
+            login(request, user)
+
+            profile = Profile.objects.get(user=user)
+            redirect_url = '/'
+
+            if profile.role == 'PEMILIK':
+                redirect_url = '/admin_dashboard/'  # ganti sesuai URL dashboard PEMILIK
+
+            return JsonResponse({
+                'success': True,
+                'message': f"Akun {user.username} berhasil dibuat! Role: {profile.get_role_display()}.",
+                'redirect_url': redirect_url
+            })
         else:
-            messages.error(request, "Registrasi gagal. Mohon periksa input Anda.")
+            # Kembalikan error field
+            errors = {field: [str(e) for e in errs] for field, errs in form.errors.items()}
+            return JsonResponse({'success': False, 'errors': errors})
     else:
+        # GET request → render halaman register
         form = CustomUserCreationForm()
-
-    context = {
-        'form': form,
-        'show_navbar': False # Untuk styling halaman penuh
-    }
-    # Perbaikan Path Template: Menggunakan path yang benar 'register.html'
-    return render(request, 'register.html', context)
+        context = {
+            'form': form,
+            'show_navbar': False
+        }
+        return render(request, 'register.html', context)
 
 
+# --- LOGIN AJAX ---
 def login_user(request):
-    """Menangani proses login user dan redirect ke halaman 'next'."""
-    # Hapus semua pesan lama biar ga numpuk
-    storage = messages.get_messages(request)
-    storage.used = True  # tandai semua pesan sudah 'terbaca'
-    
-    if request.method == 'POST':
-        # AuthenticationForm harus selalu disetel ke None saat POST (kecuali saat binding)
-        form = AuthenticationForm(request, data=request.POST) 
-
+    """Menangani login user (AJAX + GET render)."""
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            messages.success(request, f"Selamat datang kembali, {user.username}.")
-            
-            # Perbaikan: Mengambil URL 'next' untuk redirect setelah login
-            # Jika user datang dari /accounts/login/?next=/booking/create/, ia akan kembali ke sana.
-            next_url = request.GET.get('next', '/') # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
-            return redirect(next_url)
 
+            try:
+                profile = Profile.objects.get(user=user)
+            except Profile.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'errors': {'profile': ['Profil Anda belum lengkap. Silakan hubungi admin.']}
+                })
+
+            redirect_url = '/'
+            if profile.role == 'PEMILIK':
+                redirect_url = '/admin_dashboard/'
+
+            # Ambil next URL jika ada
+            next_url = request.POST.get('next')
+            if next_url:
+                redirect_url = next_url
+
+            return JsonResponse({
+                'success': True,
+                'message': f"Selamat datang kembali, {user.username}.",
+                'redirect_url': redirect_url
+            })
+        else:
+            errors = {field: [str(e) for e in errs] for field, errs in form.errors.items()}
+            return JsonResponse({'success': False, 'errors': errors})
     else:
-        # Menangani GET request
+        # GET request → render halaman login
         form = AuthenticationForm(request)
-    
-    # Tambahkan 'next' ke context agar form action tetap mengarah ke halaman yang benar
-    context = {
-        'form': form,
-        'show_navbar': False,
-        'next': request.GET.get('next', '') 
-    }
-    # Perbaikan Path Template: Menggunakan path yang benar 'login.html'
-    return render(request, 'login.html', context)
+        context = {
+            'form': form,
+            'show_navbar': False,
+            'next': request.GET.get('next', '')
+        }
+        return render(request, 'login.html', context)
 
 
+# --- LOGOUT ---
 def logout_user(request):
-    """Menghapus sesi user dan mengarahkan kembali ke halaman utama."""
+    """Logout user dan redirect ke halaman utama."""
     logout(request)
     messages.info(request, "Anda telah berhasil logout.")
-    
-    # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
     return redirect('/')

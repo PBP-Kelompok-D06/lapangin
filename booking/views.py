@@ -8,7 +8,8 @@ import json
 from django.contrib import messages
 from datetime import date, timedelta, datetime # untuk mekanisme pembatalan status pending, sehingga kembali available
 from django.utils import timezone # Untuk perbandingan timezone-aware
-
+import os
+from django.conf import settings
 
 def show_booking_page(request):
     
@@ -27,7 +28,17 @@ def show_booking_page(request):
     if not lapangan_terpilih:
         # Perbaikan Path Template: Menggunakan path lengkap 'login.html'
         return render(request, 'login.html', {'error': 'Tidak ada data lapangan di database.'})
-        
+
+    # Tentukan path gambar dinamis
+    image_filename = f"images/lapangan{lapangan_terpilih.id}.png"
+    project_static_dir = os.path.join(settings.BASE_DIR, 'static')
+    image_path = os.path.join(project_static_dir, image_filename)
+
+    if os.path.exists(image_path):
+        hero_image_url = image_filename
+    else:
+        hero_image_url = "images/lapangan_default.jpg"
+
     # 2. Tentukan Tanggal Mulai Filter (Wajib Kuat)
     if selected_date_str:
         # Jika nilai date ada di URL (meskipun kosong/invalid)
@@ -53,7 +64,7 @@ def show_booking_page(request):
     for slot_date in date_list:
         slots = list(available_slots_queryset.filter(tanggal=slot_date))
         
-        # --- PERBAIKAN: LOGIC 3-STATUS (AVAILABLE, PENDING, BOOKED) ---
+        # --- LOGIC 3-STATUS (AVAILABLE, PENDING, BOOKED) ---
         for slot in slots:
             # Status Default
             slot.display_status = 'AVAILABLE' 
@@ -77,10 +88,10 @@ def show_booking_page(request):
         'date_list': date_list,
         'slots_by_date': slots_by_date,
         'today': date.today(),
+        'hero_image_url': hero_image_url,
         'show_navbar': True,
     }
     
-    # Perbaikan Path Template: Menggunakan path yang benar
     return render(request, 'booking.html', context)
 
 

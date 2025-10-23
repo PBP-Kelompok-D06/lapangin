@@ -1,8 +1,6 @@
-# booking/models.py (Disimpan di Lapangin/booking/models.py)
-
 from django.db import models
 from django.contrib.auth.models import User
-from authbooking.models import Profile # <-- WAJIB: Import Model Profile Anda
+from authbooking.models import Profile 
 
 
 # 1. Model untuk Lapangan (Data Statis dari CSV)
@@ -16,7 +14,6 @@ class Lapangan(models.Model):
         null=True, 
         blank=True
     )
-    # --------------------------------------------------------
 
     # Kolom dari CSV:
     nama_lapangan = models.CharField(max_length=100, unique=True)
@@ -42,7 +39,7 @@ class SlotTersedia(models.Model):
     jam_akhir = models.TimeField()
     is_available = models.BooleanField(default=True)
 
-    # NEW FIELD: Untuk menampung Foreign Key ke Booking yang sedang pending
+    # Untuk menampung Foreign Key ke Booking yang sedang pending
     # Ini adalah kunci untuk menampilkan status PENDING di card user lain
     pending_booking = models.OneToOneField(
         'Booking',
