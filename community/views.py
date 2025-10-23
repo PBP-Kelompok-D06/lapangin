@@ -37,6 +37,10 @@ def show_community_page(request):
     context = {
         'communities': communities,
         'show_navbar': True,
+        'jenis_choices': Community.CATEGORY_CHOICES, 
+        'current_jenis': jenis_filter,             
+        'current_lokasi': lokasi_filter,           
+        'current_search': search,                  
     }
     return render(request, 'community.html', context)
 
