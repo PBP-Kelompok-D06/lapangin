@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-# from community.forms import CommunityForm
+from community.forms import CommunityForm
 from community.models import Community
 from django.http import HttpResponse
 from django.core import serializers
@@ -25,6 +25,33 @@ def community_detail(request, pk):
     }
     return render(request, 'community_detail.html', context)
 
+def delete_community(request, pk):
+    community = get_object_or_404(Community, pk=pk)
+    if request.method == 'POST':
+        community.delete()
+        return redirect('community_list')
+    return render(request, 'delete_community.html', {'community': community})
+
+def edit_community(request, pk):
+    community = get_object_or_404(Community, pk=pk)
+    if request.method == 'POST':
+        form = CommunityForm(request.POST, request.FILES, instance=community)
+        if form.is_valid():
+            form.save()
+            return redirect('community_detail', pk=community.pk)
+    else:
+        form = CommunityForm(instance=community)
+    return render(request, 'edit_community.html', {'form': form})
+
+def join_community(request, pk):
+    community = get_object_or_404(Community, pk=pk)
+    if community.member_count < community.max_member:
+        community.member_count += 1
+        community.save()
+        return redirect('community_detail', pk=community.pk)
+    else:
+        return render(request, 'community.html', {'community': community})
+        
 def search_communities(request):
     query = request.GET.get('q')
     if query:
