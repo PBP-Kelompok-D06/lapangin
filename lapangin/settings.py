@@ -46,9 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'authbooking',
     'booking',
+    'main',
     'community', 
     'admin_dashboard',
-    
 ]
 
 MIDDLEWARE = [

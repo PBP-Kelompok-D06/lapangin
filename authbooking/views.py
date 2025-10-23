@@ -1,83 +1,102 @@
-from django.shortcuts import redirect, render
-from django.contrib.auth.forms import UserCreationForm,  AuthenticationForm
-from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .forms import CustomUserCreationForm 
+from django.http import JsonResponse
+from .forms import CustomUserCreationForm
+from .models import Profile
 
-# --- VIEWS AUTHENTIKASI ---
 
+# --- REGISTER AJAX ---
 def register_user(request):
-    """Menangani proses registrasi user baru dengan pilihan Role."""
-    if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST) 
-        
+    """Menangani registrasi user baru (AJAX + GET render)."""
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)  # User sudah login otomatis
-        
-            role = user.profile.role
-            
-            if role == 'PEMILIK':
-                messages.success(request, f"Akun {user.username} berhasil dibuat sebagai Pemilik Lapangan!")
-                return redirect('admin_dashboard:dashboard_home')  # Langsung ke dashboard
-            else:  # PENYEWA
-                messages.success(request, f"Akun {user.username} berhasil dibuat sebagai Penyewa!")
-                return redirect('booking:show_booking_page')  # Ke halaman booking
+            user = form.save(commit=False)
+            user.save()
+
+            # Buat profile baru
+            Profile.objects.create(
+                user=user,
+                role=form.cleaned_data.get('role'),
+                nomor_rekening=form.cleaned_data.get('nomor_rekening'),
+                nomor_whatsapp=form.cleaned_data.get('nomor_whatsapp')
+            )
+
+            login(request, user)
+
+            profile = Profile.objects.get(user=user)
+            # Redirect ke dashboard kalau PEMILIK
+            redirect_url = '/dashboard/' if profile.role == 'PEMILIK' else '/'
+
+            return JsonResponse({
+                'success': True,
+                'message': f"Akun {user.username} berhasil dibuat! Role: {profile.get_role_display()}.",
+                'redirect_url': redirect_url
+            })
         else:
-            messages.error(request, "Registrasi gagal. Mohon periksa input Anda.")
+            # Kembalikan error field
+            errors = {field: [str(e) for e in errs] for field, errs in form.errors.items()}
+            return JsonResponse({'success': False, 'errors': errors})
     else:
+        # GET request → render halaman register
         form = CustomUserCreationForm()
+        context = {
+            'form': form,
+            'show_navbar': False
+        }
+        return render(request, 'register.html', context)
 
-    context = {
-        'form': form,
-        'show_navbar': False
-    }
-    return render(request, 'register.html', context)
 
-
+# --- LOGIN AJAX ---
 def login_user(request):
-    """Menangani proses login user dan redirect ke halaman 'next'."""
-    storage = messages.get_messages(request)
-    storage.used = True
-    
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST) 
-
+    """Menangani login user (AJAX + GET render)."""
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            messages.success(request, f"Selamat datang kembali, {user.username}.")
-            
-            # ✅ PERBAIKAN: Redirect berdasarkan role jika tidak ada 'next'
-            next_url = request.GET.get('next', '')
-            
+
+            try:
+                profile = Profile.objects.get(user=user)
+            except Profile.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'errors': {'profile': ['Profil Anda belum lengkap. Silakan hubungi admin.']}
+                })
+
+            redirect_url = '/'
+            if profile.role == 'PEMILIK':
+                redirect_url = '/dashboard/'
+
+            # Ambil next URL jika ada
+            next_url = request.POST.get('next')
             if next_url:
-                return redirect(next_url)
-            
-            # Jika tidak ada next, redirect berdasarkan role
-            if hasattr(user, 'profile') and user.profile.role == 'PEMILIK':
-                return redirect('admin_dashboard:dashboard_home')
-            else:
-                return redirect('booking:show_booking_page')
+                redirect_url = next_url
 
+            return JsonResponse({
+                'success': True,
+                'message': f"Selamat datang kembali, {user.username}.",
+                'redirect_url': redirect_url
+            })
+        else:
+            errors = {field: [str(e) for e in errs] for field, errs in form.errors.items()}
+            return JsonResponse({'success': False, 'errors': errors})
     else:
+        # GET request → render halaman login
         form = AuthenticationForm(request)
-    
-    context = {
-        'form': form,
-        'show_navbar': False,
-        'next': request.GET.get('next', '') 
-    }
-    return render(request, 'login.html', context)
+        context = {
+            'form': form,
+            'show_navbar': False,
+            'next': request.GET.get('next', '')
+        }
+        return render(request, 'login.html', context)
 
 
+# --- LOGOUT ---
 def logout_user(request):
-    """Menghapus sesi user dan mengarahkan kembali ke halaman utama."""
+    """Logout user dan redirect ke halaman utama."""
     logout(request)
     messages.info(request, "Anda telah berhasil logout.")
-    
-    # ✅ PERBAIKAN: Redirect ke halaman login
-    return redirect('authbooking:login')
+    return redirect('/')
