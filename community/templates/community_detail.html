@@ -54,7 +54,7 @@
                 <i class="fas fa-check-circle mr-2"></i>
                 Anda adalah anggota komunitas ini
               </p>
-              <form method="POST" action="{% url 'leave_community' community.pk %}">
+              <form method="POST" action="{% url 'community:leave_community' community.pk %}">
                 {% csrf_token %}
                 <button type="submit" onclick="return confirm('Yakin ingin keluar dari komunitas ini?')"
                         class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition">
@@ -70,7 +70,7 @@
                 <i class="fas fa-info-circle mr-2"></i>
                 Bergabunglah untuk berpartisipasi dalam forum
               </p>
-              <form method="POST" action="{% url 'join_community' community.pk %}">
+              <form method="POST" action="{% url 'community:join_community' community.pk %}">
                 {% csrf_token %}
                 <button type="submit" 
                         class="bg-primary hover:bg-[#5A6B4A] text-white px-6 py-2 rounded-lg font-semibold transition">
@@ -96,7 +96,7 @@
         <h3 class="text-xl font-bold mb-4">Buat Post Baru</h3>
         
         {# ✅ UBAH: Tambahkan ID ke form #}
-        <form method="POST" action="{% url 'post_create' community.pk %}" enctype="multipart/form-data" id="create-post-form">
+        <form method="POST" action="{% url 'community:post_create' community.pk %}" enctype="multipart/form-data" id="create-post-form">
           {% csrf_token %}
           <textarea name="content" rows="4" 
                     placeholder="Bagikan sesuatu dengan komunitas..."
@@ -142,7 +142,7 @@
                       <p class="text-sm text-gray-500">{{ post.created_at|date:"d M Y, H:i" }}</p>
                     </div>
                     {% if post.user == user or user.profile.role == 'PEMILIK' %}
-                    <form method="POST" action="{% url 'post_delete' post.pk %}" class="inline" onsubmit="return confirm('Yakin ingin menghapus post ini?')">
+                    <form method="POST" action="{% url 'community:post_delete' post.pk %}" class="inline" onsubmit="return confirm('Yakin ingin menghapus post ini?')">
                       {% csrf_token %}
                       <button type="submit"
                               class="text-red-500 hover:text-red-700 text-sm">
@@ -185,7 +185,7 @@
 
                 {% if is_member %}
                 {# ✅ TAMBAHKAN class="form-create-comment" #}
-                <form method="POST" action="{% url 'comment_create' post.pk %}" class="mt-3 form-create-comment">
+                <form method="POST" action="{% url 'community:comment_create' post.pk %}" class="mt-3 form-create-comment">
                   {% csrf_token %}
                   <div class="flex gap-2">
                     <input type="text" name="content" 
@@ -258,7 +258,7 @@
         <h3 class="text-lg font-semibold mb-4 text-gray-800">Komunitas Lainnya</h3>
         <div class="space-y-3">
           {% for other in communities %}
-          <a href="{% url 'show_detail_community' other.pk %}" 
+          <a href="{% url 'community:show_detail_community' other.pk %}" 
              class="block hover:bg-gray-50 p-3 rounded-lg transition">
             <div class="flex items-center">
               {% if other.community_image %}
@@ -280,7 +280,7 @@
           </a>
           {% endfor %}
         </div>
-        <a href="{% url 'show_community_page' %}" 
+        <a href="{% url 'community:show_community_page' %}" 
            class="block text-center mt-4 text-primary hover:underline text-sm font-semibold">
           Lihat Semua Komunitas →
         </a>

@@ -374,12 +374,12 @@ def admin_community_edit(request, pk):
 @user_passes_test(is_pemilik)
 def admin_community_delete(request, pk):
     """Hapus komunitas"""
-    community = get_object_or_404(Community, pk=pk, created_by=request.user)
+    community = get_object_or_404(Community, pk=pk)
     
     if request.method == 'POST':
         community.delete()
         messages.success(request, 'Komunitas berhasil dihapus!')
-        return redirect('admin_community_list')
+        return redirect('admin_dashboard:dashboard_home')
     
     return render(request, 'admin_community_confirm_delete.html', {'community': community})
 

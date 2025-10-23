@@ -50,7 +50,7 @@
             </p>
             <div class="flex justify-between items-center text-sm text-gray-600">
               <span>👥 {{ community.member_count }} anggota</span>
-              <a href="{% url 'show_detail_community' community.pk %}" class="text-green-600 font-medium hover:underline">
+              <a href="{% url 'community:show_detail_community' community.pk %}" class="text-green-600 font-medium hover:underline">
                 Cek Komunitas →
               </a>
             </div>
