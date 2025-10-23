@@ -14,7 +14,6 @@ class Lapangan(models.Model):
         null=True, 
         blank=True
     )
-    # --------------------------------------------------------
 
     # Kolom dari CSV:
     nama_lapangan = models.CharField(max_length=100, unique=True)
@@ -40,7 +39,7 @@ class SlotTersedia(models.Model):
     jam_akhir = models.TimeField()
     is_available = models.BooleanField(default=True)
 
-    # NEW FIELD: Untuk menampung Foreign Key ke Booking yang sedang pending
+    # Untuk menampung Foreign Key ke Booking yang sedang pending
     # Ini adalah kunci untuk menampilkan status PENDING di card user lain
     pending_booking = models.OneToOneField(
         'Booking',

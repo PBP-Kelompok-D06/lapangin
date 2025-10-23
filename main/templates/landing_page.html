@@ -5,18 +5,18 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section id="hero" class="relative w-full h-[55vh] sm:h-[60vh] md:h-[65vh] lg:h-[70vh] flex items-center px-4 md:px-10 justify-start text-left text-white overflow-hidden mt-4 md:mt-8 rounded-sm">
+<section id="hero" class="relative w-full flex items-center px-4 md:px-10 justify-start text-left text-white mt-4 md:mt-8 rounded-sm" style="height: 70vh; min-height: 70vh; max-height: 70vh; overflow: hidden;">
   <img id="hero-image"
        src="{% static 'images/image_header1.png' %}" 
        alt="Lapangan Olahraga" 
-       class="absolute inset-0 w-full h-full object-cover brightness-50 transition-opacity duration-1000 rounded-xl"
-       onerror="this.onerror=null;this.src='https://via.placeholder.com/1600x900?text=Lapang.in';">
+       class="brightness-50 rounded-xl"
+       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; transform: none !important; transition: opacity 1s ease-in-out;">
 
   <div class="relative z-10 px-2 md:px-4">
     <h1 class="text-4xl md:text-6xl font-bold mb-2">Booking Lapangan</h1>
     <h1 class="text-4xl md:text-6xl font-bold mb-2">Gak Pake Drama!</h1>
     <p class="text-md md:text-xl font-light mb-6">Cari lapangan, pilih jadwal, langsung main!</p>
-    <a href="{% url 'booking:show_booking_page' %}" 
+    <a href="#explore" 
        class="bg-[#a7bf6e] hover:bg-[#4f4f4f] text-white font-semibold py-3 px-8 rounded-md shadow-md transition">
        Explore
     </a>
@@ -78,7 +78,7 @@
 </section>
 
 <!-- Section Daftar Lapangan -->
-<section class="w-full bg-gray-50 pt-100 px-6 md:px-12 rounded-xl">
+<section id="explore" class="w-full bg-gray-50 pt-100 px-6 md:px-12 rounded-xl">
   <div class="py-8 flex flex-col md:flex-row justify-between items-center mb-8">
     <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-0">
       Temukan Lapangan Terbaik

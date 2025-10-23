@@ -8,13 +8,12 @@
 {% block content %}
 <div class="py-8">
 
-     <!-- SECTION: VISUAL HERO / HEADER LAPANGAN (IMAGE)   -->
+    <!-- SECTION: VISUAL HERO / HEADER LAPANGAN (IMAGE) -->
     <div class="relative w-full h-80 overflow-hidden rounded-lg shadow-xl mb-8">
-        <img src="{% static 'images/lapangan_default.jpg' %}" 
-             alt="Visual Lapangan {{ lapangan_terpilih.nama_lapangan }}"
-             class="w-full h-full object-cover transition duration-300 hover:scale-105"
-             onerror="this.onerror=null;this.src='https://via.placeholder.com/1200x500?text=GOR+Visual';"
-        >
+    <img src="{% static '' %}{{ hero_image_url }}" 
+        alt="Visual Lapangan {{ lapangan_terpilih.nama_lapangan }}"
+        class="w-full h-full object-cover transition duration-300 hover:scale-105">
+
         <div class="absolute inset-0 bg-black bg-opacity-30 flex items-end p-6">
             <h1 class="text-4xl font-bold text-white mb-2">{{ lapangan_terpilih.nama_lapangan|default:"Pilih Lapangan" }}</h1>
         </div>
