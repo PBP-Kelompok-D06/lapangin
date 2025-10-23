@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ lapangan.nama }}</h1>
+<img src="{{ lapangan.gambar.url }}" alt="{{ lapangan.nama }}" width="600">
+<p>{{ lapangan.deskripsi }}</p>
+<p>Harga: Rp {{ lapangan.harga_per_jam }} / jam</p>
+<p>⭐ Rata-rata rating: {{ lapangan.avg_rating }}</p>
+
+<h3>Ulasan:</h3>
+{% for review in lapangan.review_set.all %}
+  <p><b>{{ review.user.username }}</b>: {{ review.rating }}⭐</p>
+  <p>{{ review.komentar }}</p>
+{% empty %}
+  <p>Belum ada ulasan</p>
+{% endfor %}
+{% endblock %}
