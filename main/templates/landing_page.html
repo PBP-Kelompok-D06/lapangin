@@ -29,38 +29,33 @@
     Akses lapangan favoritmu dengan berbagai fasilitas lengkap
   </h2>
 
-  <!-- Fasilitas Icon -->
+  <!-- Fasilitas Icon (sederhana) -->
   <div class="grid grid-cols-3 md:grid-cols-6 gap-6 sm:gap-8 justify-center items-center">
     <div class="flex flex-col items-center">
       <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
         <i class="fas fa-wifi text-4xl md:text-5xl text-gray-600"></i>
       </div>
     </div>
-
     <div class="flex flex-col items-center">
       <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
         <i class="fas fa-mosque text-4xl md:text-5xl text-gray-600"></i>
       </div>
     </div>
-
     <div class="flex flex-col items-center">
       <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
         <i class="fas fa-door-open text-4xl md:text-5xl text-gray-600"></i>
       </div>
     </div>
-
     <div class="flex flex-col items-center">
       <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
         <i class="fas fa-toilet text-4xl md:text-5xl text-gray-600"></i>
       </div>
     </div>
-
     <div class="flex flex-col items-center">
       <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
         <i class="fas fa-utensils text-4xl md:text-5xl text-gray-600"></i>
       </div>
     </div>
-
     <div class="flex flex-col items-center">
       <div class="flex items-center justify-center w-[100px] h-[100px] md:w-[130px] md:h-[130px] bg-white rounded-full shadow-lg border border-gray-100">
         <i class="fas fa-parking text-4xl md:text-5xl text-gray-600"></i>
@@ -86,7 +81,6 @@
 
     <!-- Filter -->
     <form method="get" class="flex flex-wrap gap-3">
-      <!-- Jenis Lapangan -->
       <select name="jenis" class="border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:outline-none">
         <option value="all" {% if selected_jenis == 'all' %}selected{% endif %}>Semua Jenis</option>
         {% for jenis in jenis_list %}
@@ -94,7 +88,6 @@
         {% endfor %}
       </select>
 
-      <!-- Filter Rating -->
       <select name="rating" class="border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:outline-none">
         <option value="all" {% if selected_rating == 'all' %}selected{% endif %}>Semua Rating</option>
         <option value="4" {% if selected_rating == '4' %}selected{% endif %}>⭐ 4 ke atas</option>
@@ -111,14 +104,18 @@
   </div>
 
   <!-- Grid Card -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-    {% for lap in page_obj %}
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+  {% for lap in page_obj %}
+    <a href="{% url 'gallery:detail_by_pk' pk=lap.pk %}" class="block group">
       <div class="bg-white shadow-md rounded-xl overflow-hidden hover:shadow-lg transition">
-      <img src="{% static 'images/lapangan' %}{{ lap.id }}.png" alt="{{ lap.nama_lapangan }}"
-        class="w-full h-40 object-cover">
+        {% if lap.gambar %}
+          <img src="{{ lap.gambar.url }}" alt="{{ lap.nama_lapangan|default:lap.nama }}" class="w-full h-40 object-cover">
+        {% else %}
+          <img src="{% static 'images/default-field.png' %}" alt="no image" class="w-full h-40 object-cover">
+        {% endif %}
 
         <div class="p-4">
-          <h3 class="text-lg font-semibold text-gray-900">{{ lap.nama_lapangan }}</h3>
+          <h3 class="text-lg font-semibold text-gray-900">{{ lap.nama_lapangan|default:lap.nama }}</h3>
           <p class="text-sm text-gray-600">{{ lap.lokasi }}</p>
           <p class="text-sm text-gray-500 mt-1">Fasilitas: {{ lap.fasilitas }}</p>
           <p class="font-medium text-[#a7bf6e] mt-2">Rp {{ lap.harga_per_jam|floatformat:0 }}/jam</p>
@@ -128,20 +125,17 @@
               <span class="ml-1 text-gray-700 text-sm">{{ lap.rating }}</span>
               <span class="text-gray-500 text-xs ml-1">({{ lap.jumlah_ulasan }})</span>
             </div>
-            <a href="#" class="text-sm text-[#a7bf6e] hover:underline">Cek Lapangan →</a>
-            {% comment %}
-            pake ini kalo link gallery udah ada
-            <a href="{% url 'gallery:show_gallery' lap_id=lap.pk %}" class="text-sm text-[#a7bf6e] hover:underline">Cek Lapangan →</a>
-            {% endcomment %}
+            <span class="text-sm text-[#a7bf6e] hover:underline">Cek Lapangan →</span>
           </div>
         </div>
       </div>
-    {% empty %}
-      <p class="text-gray-600 col-span-full text-center">Tidak ada lapangan yang sesuai filter.</p>
-    {% endfor %}
-  </div>
+    </a>
+  {% empty %}
+    <p class="text-gray-600 col-span-full text-center">Tidak ada lapangan yang sesuai filter.</p>
+  {% endfor %}
+</div>
 
-  <!-- Navigasi Page -->
+  <!-- Pagination -->
   <div class="flex justify-center items-center mt-8 mb-4 space-x-2">
     {% if page_obj.has_previous %}
       <a href="?page={{ page_obj.previous_page_number }}{% if selected_jenis != 'all' %}&jenis={{ selected_jenis }}{% endif %}{% if selected_rating != 'all' %}&rating={{ selected_rating }}{% endif %}"
@@ -162,12 +156,9 @@
         class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
     {% endif %}
   </div>
-
-
 </section>
 
-
-<!-- Script untuk carousel -->
+<!-- simple hero carousel script (optional) -->
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     const heroImage = document.getElementById("hero-image");
@@ -177,20 +168,15 @@
       "{% static 'images/image_header3.png' %}"
     ];
     let index = 0;
-
     setInterval(() => {
-      // Fade out
       heroImage.classList.add("opacity-0");
-
       setTimeout(() => {
-        // Ganti gambar setelah fade out
         index = (index + 1) % images.length;
         heroImage.src = images[index];
-
-        // Fade in
         heroImage.classList.remove("opacity-0");
       }, 500);
-    }, 10000); // Ganti gambar setiap 4 detik
+    }, 8000);
   });
 </script>
+
 {% endblock %}
