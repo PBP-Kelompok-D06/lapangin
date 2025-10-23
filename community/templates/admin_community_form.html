@@ -98,11 +98,10 @@
 
         <!-- Action Buttons -->
         <div class="flex space-x-4">
-            
-            <button type="button" onclick="window.location.href='{% url 'community:admin_community_list' %}'" 
-                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition">
-                <i class="fas fa-arrow-left mr-2"></i> BATAL
-            </button>
+            <a href="{% url 'community:admin_community_list' %}"
+               class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition">
+              <i class="fas fa-arrow-left mr-2"></i> BATAL
+            </a>
             <button type="submit" 
                     class="flex-1 bg-gradient-to-r from-[#86A96F] to-[#D4A574] hover:from-[#5A6B4A] hover:to-[#C4956A] text-white py-3 rounded-lg font-semibold transition">
                 <i class="fas fa-save mr-2"></i> SIMPAN
