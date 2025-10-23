@@ -12,17 +12,20 @@ from .forms import CustomUserCreationForm
 def register_user(request):
     """Menangani proses registrasi user baru dengan pilihan Role."""
     if request.method == 'POST':
-        # Menggunakan Form kustom yang menangani field Role
         form = CustomUserCreationForm(request.POST) 
         
         if form.is_valid():
             user = form.save()
-            login(request, user) 
-            # Menggunakan f-string untuk menampilkan Role (Sesuai Logic Model Anda)
-            messages.success(request, f"Akun {user.username} berhasil dibuat! Role: {user.profile.get_role_display()}.")
+            login(request, user)  # User sudah login otomatis
+        
+            role = user.profile.role
             
-            # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
-            return redirect('/')
+            if role == 'PEMILIK':
+                messages.success(request, f"Akun {user.username} berhasil dibuat sebagai Pemilik Lapangan!")
+                return redirect('admin_dashboard:dashboard_home')  # Langsung ke dashboard
+            else:  # PENYEWA
+                messages.success(request, f"Akun {user.username} berhasil dibuat sebagai Penyewa!")
+                return redirect('booking:show_booking_page')  # Ke halaman booking
         else:
             messages.error(request, "Registrasi gagal. Mohon periksa input Anda.")
     else:
@@ -30,20 +33,17 @@ def register_user(request):
 
     context = {
         'form': form,
-        'show_navbar': False # Untuk styling halaman penuh
+        'show_navbar': False
     }
-    # Perbaikan Path Template: Menggunakan path yang benar 'register.html'
     return render(request, 'register.html', context)
 
 
 def login_user(request):
     """Menangani proses login user dan redirect ke halaman 'next'."""
-    # Hapus semua pesan lama biar ga numpuk
     storage = messages.get_messages(request)
-    storage.used = True  # tandai semua pesan sudah 'terbaca'
+    storage.used = True
     
     if request.method == 'POST':
-        # AuthenticationForm harus selalu disetel ke None saat POST (kecuali saat binding)
         form = AuthenticationForm(request, data=request.POST) 
 
         if form.is_valid():
@@ -51,22 +51,26 @@ def login_user(request):
             login(request, user)
             messages.success(request, f"Selamat datang kembali, {user.username}.")
             
-            # Perbaikan: Mengambil URL 'next' untuk redirect setelah login
-            # Jika user datang dari /accounts/login/?next=/booking/create/, ia akan kembali ke sana.
-            next_url = request.GET.get('next', '/') # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
-            return redirect(next_url)
+            # ✅ PERBAIKAN: Redirect berdasarkan role jika tidak ada 'next'
+            next_url = request.GET.get('next', '')
+            
+            if next_url:
+                return redirect(next_url)
+            
+            # Jika tidak ada next, redirect berdasarkan role
+            if hasattr(user, 'profile') and user.profile.role == 'PEMILIK':
+                return redirect('admin_dashboard:dashboard_home')
+            else:
+                return redirect('booking:show_booking_page')
 
     else:
-        # Menangani GET request
         form = AuthenticationForm(request)
     
-    # Tambahkan 'next' ke context agar form action tetap mengarah ke halaman yang benar
     context = {
         'form': form,
         'show_navbar': False,
         'next': request.GET.get('next', '') 
     }
-    # Perbaikan Path Template: Menggunakan path yang benar 'login.html'
     return render(request, 'login.html', context)
 
 
@@ -75,5 +79,5 @@ def logout_user(request):
     logout(request)
     messages.info(request, "Anda telah berhasil logout.")
     
-    # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
-    return redirect('/')
+    # ✅ PERBAIKAN: Redirect ke halaman login
+    return redirect('authbooking:login')

@@ -22,7 +22,8 @@
                    class="border border-gray-300 rounded-lg px-4 py-2">
         </div>
         
-        <a href="{% url 'admin_community_create' %}" 
+        
+        <a href="{% url 'community:admin_community_create' %}" 
            class="bg-[#C8D5B9] hover:bg-[#86A96F] text-gray-800 px-6 py-2 rounded-lg font-semibold transition flex items-center">
             <i class="fas fa-plus mr-2"></i> Tambah
         </a>
@@ -57,17 +58,20 @@
                 
                 <p class="text-sm text-gray-600 mb-3">{{ community.description|truncatewords:15 }}</p>
                 
-                <a href="{% url 'show_detail_community' community.pk %}" 
+                
+                <a href="{% url 'community:show_detail_community' community.pk %}" 
                    class="block text-[#86A96F] hover:underline text-sm mb-3">
                     Lihat Komunitas →
                 </a>
                 
                 <div class="flex space-x-2">
-                    <a href="{% url 'admin_community_edit' community.pk %}" 
+                    
+                    <a href="{% url 'community:admin_community_edit' community.pk %}" 
                        class="flex-1 bg-gray-800 hover:bg-gray-700 text-white text-center py-2 rounded transition">
                         Edit
                     </a>
-                    <form method="POST" action="{% url 'admin_community_delete' community.pk %}" 
+                    
+                    <form method="POST" action="{% url 'community:admin_community_delete' community.pk %}" 
                           onsubmit="return confirm('Yakin ingin menghapus komunitas ini?')" class="flex-1">
                         {% csrf_token %}
                         <button type="submit" 
@@ -82,7 +86,8 @@
         <div class="col-span-3 text-center py-12">
             <i class="fas fa-users text-gray-300 text-6xl mb-4"></i>
             <p class="text-gray-500 text-lg">Belum ada komunitas. Buat komunitas pertama Anda!</p>
-            <a href="{% url 'admin_community_create' %}" 
+            
+            <a href="{% url 'community:admin_community_create' %}" 
                class="inline-block mt-4 bg-[#86A96F] text-white px-6 py-2 rounded-lg hover:bg-[#5A6B4A] transition">
                 Buat Komunitas
             </a>
@@ -92,7 +97,8 @@
 
     <!-- Link ke Request Komunitas -->
     <div class="mt-8">
-        <a href="{% url 'admin_request_list' %}" 
+        
+        <a href="{% url 'community:admin_request_list' %}" 
            class="block bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded hover:bg-yellow-200 transition">
             <div class="flex items-center justify-between">
                 <div>
