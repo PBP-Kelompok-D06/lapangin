@@ -1,3 +1,5 @@
+# authbooking/forms.py
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -15,15 +17,14 @@ class CustomUserCreationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
-            placeholder_text = f"Enter your {field.label.lower()}"  # default
+            placeholder_text = f"Enter your {field.label.lower()}"
 
-            #  placeholder custom untuk field tertentu
             if field_name == 'nomor_rekening':
                 placeholder_text = "contoh: 1234567890 - a.n. Budi Santoso"
             elif field_name == 'nomor_whatsapp':
                 placeholder_text = "contoh: +6281234567890"
             elif field_name == 'role':
-                placeholder_text = "Pilih role Anda"  # untuk dropdown
+                placeholder_text = "Pilih role Anda"
 
             field.widget.attrs.update({
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#839556] transition-colors',
@@ -33,17 +34,27 @@ class CustomUserCreationForm(UserCreationForm):
     def clean_nomor_whatsapp(self):
         nomor = self.cleaned_data.get('nomor_whatsapp', '').strip()
 
-        # Jika user isi 0812..., ubah ke +62812...
         if nomor.startswith('0'):
             nomor = '+62' + nomor[1:]
         elif not nomor.startswith('+62'):
-            nomor = '+62' + nomor  # jaga-jaga kalau lupa nulis '+'
+            nomor = '+62' + nomor
 
-        # Validasi isi dan panjang nomor
-        if not nomor[1:].replace('+', '').isdigit():
+        if nomor and not nomor[1:].replace('+', '').isdigit():
             raise forms.ValidationError("Nomor WhatsApp hanya boleh berisi angka setelah tanda '+'.")
-        if len(nomor) < 10 or len(nomor) > 15:
+        if nomor and (len(nomor) < 10 or len(nomor) > 15):
             raise forms.ValidationError("Nomor WhatsApp tampaknya tidak valid.")
 
-        
         return nomor
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if commit:
+            user.save()
+            # Profile sudah auto-created oleh signal
+            # Tinggal update field tambahan
+            profile = user.profile
+            profile.role = self.cleaned_data.get('role')
+            profile.nomor_rekening = self.cleaned_data.get('nomor_rekening')
+            profile.nomor_whatsapp = self.cleaned_data.get('nomor_whatsapp')
+            profile.save()
+        return user

@@ -6,7 +6,7 @@ from django.http import JsonResponse
 
 # Import dari BOOKING models (bukan admin_dashboard models)
 from booking.models import Booking, SlotTersedia, Lapangan
-from komunitas.models import Komunitas, RequestKomunitas
+from community.models import Community, CommunityRequest 
 from datetime import date, time, timedelta
 
 # Decorator untuk cek role PEMILIK
@@ -30,7 +30,7 @@ def dashboard_home(request):
     total_lapangan = Lapangan.objects.filter(pengelola=request.user.profile).count()
     
     # Hitung total komunitas yang dibuat
-    total_komunitas = Komunitas.objects.filter(dibuat_oleh=request.user).count()
+    total_komunitas = Community.objects.filter(created_by=request.user).count()
     
     # Hitung booking pending untuk lapangan milik pemilik ini
     pending_bookings = Booking.objects.filter(
@@ -41,8 +41,8 @@ def dashboard_home(request):
     context = {
         'total_lapangan': total_lapangan,
         'total_komunitas': total_komunitas,
-        'pending_requests': RequestKomunitas.objects.filter(status='pending').count(),
-        'pending_bookings': pending_bookings,  # Tambahan untuk notifikasi
+        'pending_requests': CommunityRequest.objects.filter(status='pending').count(), 
+        'pending_bookings': pending_bookings,  
     }
     return render(request, 'admin_dashboard/dashboard_home.html', context)
 

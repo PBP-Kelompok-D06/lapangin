@@ -116,7 +116,7 @@
                         <span>Riwayat Transaksi</span>
                     </a>
                     
-                    <a href="{% url 'admin_community_list' %}" 
+                    <a href="{% url 'community:admin_community_list' %}" 
                         class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'community' in request.resolver_match.url_name %}sidebar-active{% endif %}">
                             <i class="fas fa-users"></i>
                             <span>Komunitas</span>

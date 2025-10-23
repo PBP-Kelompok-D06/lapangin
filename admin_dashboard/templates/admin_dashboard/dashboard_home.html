@@ -50,9 +50,9 @@
             </div>
             <h3 class="text-2xl font-bold text-gray-800 mb-1">{{ total_komunitas }}</h3>
             <p class="text-gray-600 text-sm">Komunitas Aktif</p>
-            <a href="{% url 'komunitas:komunitas_list' %}" 
-               class="mt-4 text-blue-500 hover:text-blue-600 text-sm font-semibold inline-flex items-center">
-                Kelola <i class="fas fa-arrow-right ml-2"></i>
+            <a href="{% url 'community:admin_community_list' %}" 
+                class="mt-4 text-blue-500 hover:text-blue-600 text-sm font-semibold inline-flex items-center">
+                    Kelola <i class="fas fa-arrow-right ml-2"></i>
             </a>
         </div>
     </div>
@@ -113,10 +113,10 @@
                 <p class="font-semibold text-gray-700">Lihat Transaksi</p>
             </a>
             
-            <a href="{% url 'komunitas:komunitas_create' %}" 
-               class="bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-lg p-4 text-center transition">
-                <i class="fas fa-users-plus text-3xl text-purple-500 mb-2"></i>
-                <p class="font-semibold text-gray-700">Buat Komunitas</p>
+            <a href="{% url 'community:admin_community_create' %}" 
+                class="bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-lg p-4 text-center transition">
+                    <i class="fas fa-users-plus text-3xl text-purple-500 mb-2"></i>
+                    <p class="font-semibold text-gray-700">Buat Komunitas</p>
             </a>
         </div>
     </div>

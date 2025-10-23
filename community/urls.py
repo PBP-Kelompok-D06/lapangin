@@ -14,8 +14,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# community/urls.py
+
 from django.urls import path
 from . import views
+
+app_name = 'community'  
 
 urlpatterns = [
     # Public views
@@ -33,7 +37,7 @@ urlpatterns = [
     path('request/', views.request_community_create, name='request_community_create'),
     path('request/my/', views.my_community_requests, name='my_community_requests'),
     
-    # Admin views (untuk admin_dashboard)
+    # ✅ Admin views (PASTIKAN SEMUA ADA)
     path('admin/list/', views.admin_community_list, name='admin_community_list'),
     path('admin/create/', views.admin_community_create, name='admin_community_create'),
     path('admin/<int:pk>/edit/', views.admin_community_edit, name='admin_community_edit'),
