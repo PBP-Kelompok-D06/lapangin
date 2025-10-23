@@ -1,17 +1,20 @@
+# pbp-kelompok-d06/lapangin/lapangin-feat-admin-dashboard/community/views.py
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse # ✅ TAMBAHKAN JsonResponse
 from django.core import serializers
 from django.db.models import Q, Count
 from .models import Community, CommunityMember, CommunityPost, PostComment, CommunityRequest
+# 🔽 (Hapus render_to_string jika ada, kita tidak membutuhkannya di sini)
 
 def is_pemilik(user):
     """Cek apakah user adalah PEMILIK"""
     return hasattr(user, 'profile') and user.profile.role == 'PEMILIK'
 
 # ==================== PUBLIC VIEWS ====================
-
+# ... (view show_community_page, community_detail, join_community, leave_community tidak berubah) ...
 def show_community_page(request):
     """Halaman utama community - tampilan public"""
     jenis_filter = request.GET.get('jenis', '')
@@ -134,39 +137,57 @@ def leave_community(request, pk):
     
     return redirect('show_community_page')
 
-
 # ==================== FORUM FEATURES ====================
 
 @login_required
 def post_create(request, pk):
-    """Buat post baru di komunitas"""
+    """Buat post baru di komunitas (Handle AJAX)"""
     community = get_object_or_404(Community, pk=pk)
-    
-    # Cek apakah user adalah anggota
-    if not CommunityMember.objects.filter(
-        community=community, 
-        user=request.user,
-        is_active=True
-    ).exists():
+    # ✅ Cek apakah ini request AJAX
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    if not CommunityMember.objects.filter(community=community, user=request.user, is_active=True).exists():
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Anda harus menjadi anggota untuk membuat post.'}, status=403)
         messages.error(request, 'Anda harus menjadi anggota untuk membuat post.')
         return redirect('show_detail_community', pk=pk)
-    
+
     if request.method == 'POST':
         content = request.POST.get('content', '').strip()
-        if content:
-            post = CommunityPost.objects.create(
-                community=community,
-                user=request.user,
-                content=content
-            )
-            
-            if request.FILES.get('image'):
-                post.image = request.FILES['image']
-                post.save()
-            
-            messages.success(request, 'Post berhasil dibuat!')
-        else:
+        image = request.FILES.get('image')
+
+        if not content:
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': 'Konten post tidak boleh kosong.'}, status=400)
             messages.error(request, 'Konten post tidak boleh kosong.')
+            return redirect('show_detail_community', pk=pk)
+
+        post = CommunityPost.objects.create(
+            community=community,
+            user=request.user,
+            content=content,
+            image=image
+        )
+
+        if is_ajax:
+            # ✅ Kembalikan data JSON, bukan HTML
+            return JsonResponse({
+                'success': True,
+                'post': {
+                    'pk': post.pk,
+                    'content': post.content,
+                    'image_url': post.image.url if post.image else None,
+                    'created_at': post.created_at.strftime("%d %b %Y, %H:%M"),
+                    'user': {
+                        'username': post.user.username,
+                        'initial': post.user.username[0].upper()
+                    },
+                    'delete_url': f"/community/post/{post.pk}/delete/", # Asumsi dari urls.py
+                    'comment_url': f"/community/post/{post.pk}/comment/" # Asumsi dari urls.py
+                }
+            })
+
+        messages.success(request, 'Post berhasil dibuat!')
     
     return redirect('show_detail_community', pk=pk)
 
@@ -190,35 +211,51 @@ def post_delete(request, pk):
 
 @login_required
 def comment_create(request, pk):
-    """Buat komentar pada post"""
+    """Buat komentar pada post (Handle AJAX)"""
     post = get_object_or_404(CommunityPost, pk=pk)
-    
-    # Cek apakah user adalah anggota
-    if not CommunityMember.objects.filter(
-        community=post.community, 
-        user=request.user,
-        is_active=True
-    ).exists():
+    # ✅ Cek apakah ini request AJAX
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    if not CommunityMember.objects.filter(community=post.community, user=request.user, is_active=True).exists():
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Anda harus menjadi anggota untuk berkomentar.'}, status=403)
         messages.error(request, 'Anda harus menjadi anggota untuk berkomentar.')
         return redirect('show_detail_community', pk=post.community.pk)
     
     if request.method == 'POST':
         content = request.POST.get('content', '').strip()
         if content:
-            PostComment.objects.create(
+            comment = PostComment.objects.create(
                 post=post,
                 user=request.user,
                 content=content
             )
+
+            if is_ajax:
+                # ✅ Kembalikan data JSON
+                return JsonResponse({
+                    'success': True,
+                    'comment': {
+                        'content': comment.content,
+                        'created_at': comment.created_at.strftime("%d %b %Y, %H:%M"),
+                        'user': {
+                            'username': comment.user.username,
+                            'initial': comment.user.username[0].upper()
+                        }
+                    }
+                })
+
             messages.success(request, 'Komentar berhasil ditambahkan!')
         else:
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': 'Komentar tidak boleh kosong.'}, status=400)
             messages.error(request, 'Komentar tidak boleh kosong.')
     
     return redirect('show_detail_community', pk=post.community.pk)
 
 
 # ==================== REQUEST KOMUNITAS (MEMBER) ====================
-
+# ... (sisa view tidak berubah) ...
 @login_required
 def request_community_create(request):
     """Member membuat request komunitas baru"""
