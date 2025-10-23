@@ -6,16 +6,33 @@ from booking.models import Lapangan as Field
 from authbooking.models import Profile
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg
 
 def review_list(request, field_id):
     field = get_object_or_404(Field, id=field_id)
-    reviews = Review.objects.filter(field=field).order_by('-created_at')
+    
+    filter_rating = request.GET.get('filter', 'all')
+    
+    reviews = Review.objects.filter(field=field)
+    
+    if filter_rating == 'terbaru':
+        reviews = reviews.order_by('-created_at')
+    elif filter_rating != 'all':
+        try:
+            rating_value = int(filter_rating)
+            if 1 <= rating_value <= 5:
+                reviews = reviews.filter(rating=rating_value).order_by('-created_at')
+            else:
+                reviews = reviews.order_by('-created_at')
+        except ValueError:
+            reviews = reviews.order_by('-created_at')
+    else:
+        reviews = reviews.order_by('-created_at')
 
     for review in reviews:
         review.is_owner = review.user.user == request.user
         review.id = review.id
 
-    # kalau request dari AJAX
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         reviews_data = [
             {
@@ -31,11 +48,24 @@ def review_list(request, field_id):
 
         return JsonResponse({"reviews": reviews_data})
 
-    # kalau bukan AJAX
     return render(request, 'all_reviews.html', {
         'reviews': reviews,
         'field': field,
         'show_navbar': True
+    })
+
+def review_statistics(request, field_id):
+    field = get_object_or_404(Field, id=field_id)
+    reviews = Review.objects.filter(field=field)
+    
+    total_reviews = reviews.count()
+    rating_counts = {i: reviews.filter(rating=i).count() for i in range(1, 6)}
+    average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+    
+    return JsonResponse({
+        "total_reviews": total_reviews,
+        "rating_counts": rating_counts,
+        "average_rating": average_rating
     })
 
 @csrf_exempt
@@ -109,7 +139,6 @@ def add_review(request, field_id):
             field=field,
             content=content,
             rating=rating,
-
         )
         return JsonResponse({
             "success": True,
@@ -123,6 +152,3 @@ def add_review(request, field_id):
             }
         })
     return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
-
-
-# Create your views here.

@@ -10,6 +10,10 @@
 <button id="btn-tambah-ulasan" style="margin-top: 8px;display: flex;height: 52px;padding: 12px 28px;align-items: center;gap: 12px; border-radius: 4px; background: var(--Foundation-Primary-primary-500, #B8D279);">
     Tambah Ulasan
 </button>
+<button id="btn-lihat-ulasan" style="margin-top: 8px;display: flex;height: 52px;padding: 12px 28px;align-items: center;gap: 12px; border-radius: 4px; background: var(--Foundation-Primary-primary-500, #B8D279);">
+    Lihat Semua Ulasan
+</button>
+
 
 <div class="all-reviews" style="display: flex; flex-direction: column; align-items: flex-start; gap: 40px; align-self: stretch; width: 100%;">
   {% for review in reviews |slice:":5"%}
@@ -41,9 +45,6 @@
     </div>
   </div>
   {% endfor %}
-　<button id="btn-lihat-ulasan" style="margin-top: 8px;display: flex;height: 52px;padding: 12px 28px;align-items: center;gap: 12px; border-radius: 4px; background: var(--Foundation-Primary-primary-500, #B8D279);">
-    Lihat Semua Ulasan
-　</button>
 </div>
 
 {% include "modal_input.html" %}
