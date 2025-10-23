@@ -1,3 +1,2 @@
-from django.db import models
-
-# Create your models here.
+from django.contrib import admin
+# Tidak ada model yang diregister di sini
