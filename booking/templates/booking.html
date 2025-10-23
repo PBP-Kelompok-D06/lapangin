@@ -1,7 +1,6 @@
 {% extends 'base.html' %} 
 {% load static %}
 {% load custom_filters %} 
-{% comment %} MENGHAPUS: {% load humanize %} {% endcomment %}
 
 {% block title %}{{ lapangan_terpilih.nama_lapangan }} Booking{% endblock %}
 
@@ -170,6 +169,24 @@
 {# -------------------------------------------------------- #}
 {% block extra_script %}
 <script>
+// ✅ TAMBAHAN KRITIS: Fungsi untuk mendapatkan CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
 document.addEventListener('DOMContentLoaded', () => {
     let selectedSlotId = null;
     const btnBayar = document.getElementById('btn-lanjut-bayar');
@@ -207,7 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch("{% url 'booking:create_booking' %}", {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken  // ✅ TAMBAHAN KRITIS: CSRF Token
+                },
                 body: JSON.stringify({ slot_id: selectedSlotId })
             });
 
@@ -221,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 messageArea.innerHTML = '';
                 return;
             }
-
 
             const result = await response.json();
 
@@ -289,7 +308,6 @@ const updateCardStatus = (slotId, newStatus) => {
     }
 };
 
-
 const pollStatus = async () => {
     // Ambil Lapangan ID yang sedang dilihat User 2 dari filter dropdown
     const lapanganSelect = document.getElementById('lapangan_id_filter');
@@ -317,6 +335,5 @@ const pollStatus = async () => {
 if (document.getElementById('lapangan_id_filter')) {
     setInterval(pollStatus, pollingInterval);
 }
-// ----------------------------------------
 </script>
 {% endblock extra_script %}

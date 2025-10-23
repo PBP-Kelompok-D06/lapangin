@@ -7,29 +7,30 @@ from authbooking.models import Profile # <-- WAJIB: Import Model Profile Anda
 
 # 1. Model untuk Lapangan (Data Statis dari CSV)
 class Lapangan(models.Model):
-    # --- PENAMBAHAN FIELD PENGELOLA DENGAN RELASI CASCADE ---
     pengelola = models.ForeignKey(
         Profile, 
-        on_delete=models.CASCADE, # <--- JIKA PROFILE ADMIN DIHAPUS, LAPANGAN AKAN IKUT TERHAPUS
+        on_delete=models.CASCADE,
         related_name='lapangan_dikelola',
-        limit_choices_to={'role': 'PEMILIK'}, # Hanya Profile dengan Role 'PEMILIK' yang bisa memilih
+        limit_choices_to={'role': 'PEMILIK'},
         null=True, 
         blank=True
     )
-    # --------------------------------------------------------
-
-    # Kolom dari CSV:
+    
     nama_lapangan = models.CharField(max_length=100, unique=True)
     jenis_olahraga = models.CharField(max_length=50)
     lokasi = models.CharField(max_length=100)
     harga_per_jam = models.DecimalField(max_digits=10, decimal_places=0)
     fasilitas = models.TextField(default='-') 
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00) 
-    jumlah_ulasan = models.IntegerField(default=0) 
+    jumlah_ulasan = models.IntegerField(default=0)
+    
+    # TAMBAHKAN KEMBALI FIELD INI
+    foto_utama = models.ImageField(upload_to='lapangan/', null=True, blank=True)
+    deskripsi = models.TextField(blank=True, default='')
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f'{self.nama_lapangan} ({self.jenis_olahraga})'
-
 # 2. Model Slot Tersedia (Initial Dataset 100+)
 class SlotTersedia(models.Model):
     lapangan = models.ForeignKey(

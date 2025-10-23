@@ -14,17 +14,15 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-# community/urls.py
-
 from django.urls import path
 from . import views
 
-app_name = 'community'  
+app_name = 'community'  # Pastikan konsisten
 
 urlpatterns = [
     # Public views
     path('', views.show_community_page, name='show_community_page'),
-    path('community-detail/<int:pk>/', views.community_detail, name='show_detail_community'),
+    path('<int:pk>/', views.community_detail, name='show_detail_community'),  
     path('<int:pk>/join/', views.join_community, name='join_community'),
     path('<int:pk>/leave/', views.leave_community, name='leave_community'),
     
@@ -37,7 +35,7 @@ urlpatterns = [
     path('request/', views.request_community_create, name='request_community_create'),
     path('request/my/', views.my_community_requests, name='my_community_requests'),
     
-    # ✅ Admin views (PASTIKAN SEMUA ADA)
+    # Admin views
     path('admin/list/', views.admin_community_list, name='admin_community_list'),
     path('admin/create/', views.admin_community_create, name='admin_community_create'),
     path('admin/<int:pk>/edit/', views.admin_community_edit, name='admin_community_edit'),
@@ -45,11 +43,6 @@ urlpatterns = [
     path('admin/requests/', views.admin_request_list, name='admin_request_list'),
     path('admin/requests/<int:pk>/approve/', views.admin_request_approve, name='admin_request_approve'),
     path('admin/requests/<int:pk>/reject/', views.admin_request_reject, name='admin_request_reject'),
-    
-    # Existing from friend
-    path('<int:pk>/delete/', views.delete_community, name='delete_community'),
-    path('search/', views.search_communities, name='search_communities'),
-    path('filter/<str:sport_type>/', views.filter_communities_by_sport, name='filter_by_sport'),
     
     # API endpoints
     path('xml/', views.show_xml, name='show_xml'),

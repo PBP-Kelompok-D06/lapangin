@@ -1,14 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect  
 from .models import SlotTersedia, Booking, Lapangan
 from datetime import date, timedelta
-from django.views.decorators.csrf import csrf_exempt 
 import json 
 from django.contrib import messages
-from datetime import date, timedelta, datetime # untuk mekanisme pembatalan status pending, sehingga kembali available
-from django.utils import timezone # Untuk perbandingan timezone-aware
-
+from datetime import date, timedelta, datetime
+from django.utils import timezone
 
 def show_booking_page(request):
     
@@ -85,7 +84,7 @@ def show_booking_page(request):
 
 
 # 2. create_booking: Memproses permintaan booking dari AJAX (Form Input Wajib)
-@csrf_exempt 
+@csrf_protect
 @login_required 
 def create_booking(request):
     if request.method == 'POST':
@@ -95,32 +94,24 @@ def create_booking(request):
         try:
             data = json.loads(request.body)
             slot_id = data.get('slot_id')
-            slot = get_object_or_404(SlotTersedia, pk=slot_id) # <-- Baris ini harus aman
+            slot = get_object_or_404(SlotTersedia, pk=slot_id)
             
-            # ... (Tahap 1: Validasi Status Pending tetap sama) ...
-            
-            # Hitung total pembayaran (Perbaikan: Memastikan nilai tidak NULL)
+            # Hitung total pembayaran
             raw_price = slot.lapangan.harga_per_jam
             total_bayar = raw_price if raw_price is not None else 0
             
-            # --- PERBAIKAN KRITIS: INPUT FIELD KE MODEL CREATE ---
             booking = Booking.objects.create(
                 user=request.user,
                 slot=slot,
-                # TANGGAL BOOKING: Gunakan tanggal slot atau waktu sekarang
-                # Asumsi di Model Anda memiliki auto_now_add=True atau field tidak wajib. 
-                # Jika wajib, kita gunakan tanggal dari slot:
-                tanggal_booking=slot.tanggal, # <--- TAMBAHKAN INI
-                total_bayar=total_bayar,     # <--- TAMBAHKAN INI
+                tanggal_booking=timezone.now(),  # ✅ Gunakan timezone aware
+                total_bayar=total_bayar,
                 status_pembayaran='PENDING' 
             )
-            # ----------------------------------------------------
             
-            # KUNCI BARU: Update Slot untuk menandai bahwa ia sedang di-pending
+            # Update Slot untuk menandai sedang pending
             slot.pending_booking = booking
             slot.save()
             
-            # Kembalikan respons sukses
             return JsonResponse({
                 'success': True,
                 'booking_id': booking.id, 
@@ -128,11 +119,9 @@ def create_booking(request):
             }, status=200)
 
         except Exception as e:
-            # Ini akan menangkap NOT NULL constraint failed
             return JsonResponse({'message': f'Internal Server Error: {str(e)}'}, status=500)
 
     return JsonResponse({'message': 'Metode tidak diizinkan.'}, status=405)
-
 
 
 # View AJAX untuk Polling Status Slot
