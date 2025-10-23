@@ -20,4 +20,9 @@ urlpatterns = [
     
     # Transaksi/Riwayat (NEW!)
     path('transaksi/', views.transaksi_list, name='transaksi_list'),
+
+    #Booking
+    path('booking-sessions/', views.booking_sessions_list, name='booking_sessions_list'),
+    path('booking-sessions/create/', views.booking_sessions_create, name='booking_sessions_create'),
+    path('booking-sessions/<int:pk>/delete/', views.booking_session_delete, name='booking_session_delete'),
 ]

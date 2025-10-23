@@ -51,7 +51,7 @@
                 </div>
                 
                 <!-- User Info & Logout -->
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
                     <button class="text-gray-600 hover:text-gray-800 relative">
                         <i class="fas fa-bell text-xl"></i>
                         {% if pending_bookings > 0 %}
@@ -69,7 +69,7 @@
                     </div>
                     
                     <a href="{% url 'authbooking:logout' %}" 
-                       class="px-3 py-1.5 text-sm font-semibold text-white bg-red-500 rounded-lg shadow-md hover:bg-red-600 transition duration-150">
+                       class="px-3 py-1.5 text-sm font-semibold text-white bg-[#F00202] rounded-lg shadow-md hover:bg-[#7C1818] transition duration-150">
                         Logout
                     </a>
                 </div>
@@ -121,6 +121,11 @@
                         <i class="fas fa-users"></i>
                         <span>Komunitas</span>
                     </a>
+                    <a href="{% url 'admin_dashboard:booking_sessions_list' %}" 
+                        class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'booking_sessions' in request.resolver_match.url_name %}sidebar-active{% endif %}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Booking Sessions</span>
+                    </a>
                 </nav>
             </div>
         </aside>
@@ -139,34 +144,51 @@
         </main>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-[#B8D279] py-8 ml-64">
-        <div class="max-w-7xl mx-auto px-8">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-3xl font-bold mb-2">
-                        <span class="text-[#4F4F4F]">Lapang</span><span class="text-white">.in</span>
-                    </h2>
-                    <p class="text-gray-700 font-semibold">#OlahragaTanpaDrama</p>
-                    <div class="flex space-x-4 mt-4">
-                        <a href="#" class="text-gray-700 hover:text-gray-900"><i class="fab fa-instagram text-2xl"></i></a>
-                        <a href="#" class="text-gray-700 hover:text-gray-900"><i class="fab fa-whatsapp text-2xl"></i></a>
-                        <a href="#" class="text-gray-700 hover:text-gray-900"><i class="fab fa-twitter text-2xl"></i></a>
+    <footer class="bg-[#B8D279] mt-10 py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-gray-800">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                
+                <div class="mb-6 md:mb-0">
+                    <h4 class="text-3xl font-bold text-[#4F4F4F]">Lapang.<span class="text-white">in</span></h4>
+                    <p class="text-lg font-medium text-gray-700 mt-1">#OlahragaTanpaDrama</p>
+                    <div class="flex space-x-4 mt-4 text-2xl">
+                        <a href="#" class="hover:text-indigo-700 transition"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="hover:text-indigo-700 transition"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#" class="hover:text-indigo-700 transition"><i class="fab fa-twitter"></i></a>
                     </div>
                 </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-4">
+                    <a href="#" class="font-medium hover:text-indigo-700 transition">Home</a> 
+                    <a href="#" class="font-medium hover:text-indigo-700 transition">Community</a> 
+                    <a href="#" class="font-medium hover:text-indigo-700 transition">My Bookings</a> 
+                </div>
             </div>
-            <div class="mt-6 pt-4 border-t border-gray-400 text-center text-sm">
-                <p>Copyright 2025@Lapang.in. All Rights Reserved</p>
+    
+            <div class="mt-8 pt-6 border-t border-[#4F4F4F] text-center text-sm text-gray-600">
+                Copyright copy right 2025@Lapang.in. All Rights Reserved
             </div>
         </div>
     </footer>
 
     <!-- Toast Messages -->
     {% for message in messages %}
-        <div class="django-toast-data hidden" 
-             data-type="{{ message.tags }}" 
-             data-message="{{ message }}">
+    <div 
+            id="toast-component"
+            class="fixed bottom-8 right-8 flex items-center gap-4 p-4 px-6 rounded-xl shadow-lg z-50 
+                opacity-0 pointer-events-none transform translate-y-10 transition-all duration-500 ease-in-out"
+        >
+            <!-- Icon -->
+            <div id="toast-icon" class="text-2xl"></div>
+
+            <!-- Text -->
+            <div>
+                <h3 id="toast-title" class="font-semibold text-gray-900">Sample Title</h3>
+                <p id="toast-message" class="text-sm text-gray-700">Sample message here.</p>
+            </div>
         </div>
+
+        <script src="{% static 'js/toast.js' %}"></script>
     {% endfor %}
 
     {% block extra_js %}{% endblock %}
