@@ -104,6 +104,8 @@ def review_edit(request, review_id):
         review.content = new_content
         review.save()
 
+        review.field.update_rating()
+
         return JsonResponse({
             "success": True,
             "updated": {
@@ -120,7 +122,9 @@ def delete_review(request, review_id):
     if request.method == "POST":
         review = get_object_or_404(Review, id=review_id)
         if review.user.user == request.user:
+            field = review.field
             review.delete()
+            field.update_rating()
             return JsonResponse({"success": True})
         else:
             return JsonResponse({"success": False, "error": "Tidak memiliki izin."})
@@ -140,6 +144,8 @@ def add_review(request, field_id):
             content=content,
             rating=rating,
         )
+        field.update_rating()
+
         return JsonResponse({
             "success": True,
             "message": "Review berhasil ditambahkan!",

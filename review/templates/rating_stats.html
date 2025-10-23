@@ -7,7 +7,7 @@
     <div class="space-y-3 mb-6" id="rating-bars">
     </div>
 
-    <div class="flex flex-wrap gap-2" id="filter-chips">
+    <div class="mt-12 flex flex-wrap gap-2" id="filter-chips">
         <button 
             class="filter-chip px-4 py-2 rounded-full border-2 font-medium transition-all duration-200 bg-[#4D5833] text-white border-[#4D5833]" 
             data-rating="all"
@@ -98,7 +98,7 @@ function loadRatingStatistics(fieldId) {
             const barDiv = document.createElement('div');
             barDiv.className = 'flex items-center gap-3';
             barDiv.innerHTML = `
-                <span class="text-sm font-medium text-gray-700 w-16">${i} ⭐</span>
+                <span class="text-sm font-medium text-gray-700 w-16">${i} <span class="text-yellow-400 text-2xl">★</span></span>
                 <div class="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div class="bg-[#B8D279] h-full rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
                 </div>

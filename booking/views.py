@@ -248,3 +248,4 @@ def show_payment_page(request, booking_id):
     }
 
     return render(request, 'payment_detail.html', context)
+
