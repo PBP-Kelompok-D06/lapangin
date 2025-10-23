@@ -14,39 +14,49 @@ class CustomUserCreationForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # ... existing code ...
+        for field_name, field in self.fields.items():
+            placeholder_text = f"Enter your {field.label.lower()}"
+
+            if field_name == 'nomor_rekening':
+                placeholder_text = "contoh: 1234567890 - a.n. Budi Santoso"
+            elif field_name == 'nomor_whatsapp':
+                placeholder_text = "contoh: +6281234567890"
+            elif field_name == 'role':
+                placeholder_text = "Pilih role Anda"
+
+            field.widget.attrs.update({
+                'class': 'w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#839556] transition-colors',
+                'placeholder': placeholder_text,
+            })
     
     def clean_nomor_whatsapp(self):
         nomor = self.cleaned_data.get('nomor_whatsapp', '').strip()
         
-        # Skip validasi jika kosong (untuk PENYEWA)
+        # Skip jika kosong (untuk PENYEWA)
         if not nomor:
             return nomor
         
-        # Normalisasi nomor
         if nomor.startswith('0'):
             nomor = '+62' + nomor[1:]
         elif not nomor.startswith('+'):
             nomor = '+62' + nomor
 
-        # Validasi format
         nomor_digits = nomor.replace('+', '').replace('62', '', 1)
         if not nomor_digits.isdigit():
-            raise forms.ValidationError("Nomor WhatsApp hanya boleh berisi angka setelah tanda '+'.")
+            raise forms.ValidationError("Nomor WhatsApp hanya boleh berisi angka.")
         
         if len(nomor) < 10 or len(nomor) > 15:
-            raise forms.ValidationError("Nomor WhatsApp tampaknya tidak valid.")
+            raise forms.ValidationError("Nomor WhatsApp tidak valid.")
         
         return nomor
     
-    # TAMBAHKAN METHOD INI (PENTING!)
     def save(self, commit=True):
         user = super().save(commit=False)
         
         if commit:
             user.save()
             
-            # Buat Profile untuk user
+            # Buat Profile
             Profile.objects.create(
                 user=user,
                 role=self.cleaned_data['role'],

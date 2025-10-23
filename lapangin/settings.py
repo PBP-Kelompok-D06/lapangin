@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'admin_dashboard',  
     'komunitas',  
     'booking',
-    'authbooking.apps.AuthbookingConfig'
+    'authbooking'
 ]
 
 MIDDLEWARE = [
