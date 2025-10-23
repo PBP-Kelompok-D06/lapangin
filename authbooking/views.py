@@ -1,37 +1,28 @@
 from django.shortcuts import redirect, render
+from django.contrib.auth.forms import UserCreationForm,  AuthenticationForm
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .forms import CustomUserCreationForm 
-from .models import Profile 
 
 # --- VIEWS AUTHENTIKASI ---
 
 def register_user(request):
     """Menangani proses registrasi user baru dengan pilihan Role."""
     if request.method == 'POST':
+        # Menggunakan Form kustom yang menangani field Role
         form = CustomUserCreationForm(request.POST) 
         
         if form.is_valid():
             user = form.save()
-            
-            # PERBAIKAN: Cek apakah Profile sudah ada, kalau belum buat
-            if not hasattr(user, 'profile'):
-                Profile.objects.create(
-                    user=user,
-                    role=form.cleaned_data['role'],
-                    nomor_rekening=form.cleaned_data.get('nomor_rekening', ''),
-                    nomor_whatsapp=form.cleaned_data.get('nomor_whatsapp', '')
-                )
-            
-            login(request, user)
+            login(request, user) 
+            # Menggunakan f-string untuk menampilkan Role (Sesuai Logic Model Anda)
             messages.success(request, f"Akun {user.username} berhasil dibuat! Role: {user.profile.get_role_display()}.")
             
-            # REDIRECT BERDASARKAN ROLE
-            if user.profile.role == 'PEMILIK':
-                return redirect('/dashboard/')  # Ke Admin Dashboard
-            else:  # PENYEWA
-                return redirect('/')  # Ke Landing Page
+            # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
+            return redirect('/')
         else:
             messages.error(request, "Registrasi gagal. Mohon periksa input Anda.")
     else:
@@ -39,18 +30,20 @@ def register_user(request):
 
     context = {
         'form': form,
-        'show_navbar': False
+        'show_navbar': False # Untuk styling halaman penuh
     }
+    # Perbaikan Path Template: Menggunakan path yang benar 'register.html'
     return render(request, 'register.html', context)
 
 
 def login_user(request):
-    """Menangani proses login user dan redirect berdasarkan role."""
+    """Menangani proses login user dan redirect ke halaman 'next'."""
     # Hapus semua pesan lama biar ga numpuk
     storage = messages.get_messages(request)
-    storage.used = True
+    storage.used = True  # tandai semua pesan sudah 'terbaca'
     
     if request.method == 'POST':
+        # AuthenticationForm harus selalu disetel ke None saat POST (kecuali saat binding)
         form = AuthenticationForm(request, data=request.POST) 
 
         if form.is_valid():
@@ -58,21 +51,22 @@ def login_user(request):
             login(request, user)
             messages.success(request, f"Selamat datang kembali, {user.username}.")
             
-            # REDIRECT BERDASARKAN ROLE
-            if user.profile.role == 'PEMILIK':
-                return redirect('/dashboard/')  # Ke Admin Dashboard
-            else:  # PENYEWA
-                # Cek apakah ada 'next' parameter untuk redirect setelah login
-                next_url = request.GET.get('next', '/')
-                return redirect(next_url)
+            # Perbaikan: Mengambil URL 'next' untuk redirect setelah login
+            # Jika user datang dari /accounts/login/?next=/booking/create/, ia akan kembali ke sana.
+            next_url = request.GET.get('next', '/') # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
+            return redirect(next_url)
+
     else:
+        # Menangani GET request
         form = AuthenticationForm(request)
     
+    # Tambahkan 'next' ke context agar form action tetap mengarah ke halaman yang benar
     context = {
         'form': form,
         'show_navbar': False,
         'next': request.GET.get('next', '') 
     }
+    # Perbaikan Path Template: Menggunakan path yang benar 'login.html'
     return render(request, 'login.html', context)
 
 
@@ -80,4 +74,6 @@ def logout_user(request):
     """Menghapus sesi user dan mengarahkan kembali ke halaman utama."""
     logout(request)
     messages.info(request, "Anda telah berhasil logout.")
+    
+    # Pakai "/" untuk sementara karena page home belum dibuat, nanti ganti ke "home"
     return redirect('/')

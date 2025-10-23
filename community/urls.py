@@ -16,10 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from . import views
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('booking/', include('booking.urls')), 
-    path('accounts/', include('authbooking.urls')), 
-    path('community/', include('community.urls')),
+    # Path 1: Halaman utama community (Filter Data)
+    # URL: /community/
+    path('', views.show_community_page, name='show_community_page'),
+
+    # Path 2: Halaman detail community (Filter Data)
+    # URL: /community/community-detail/
+    path('community-detail/<int:pk>/', views.community_detail, name='community_detail'),
 ]

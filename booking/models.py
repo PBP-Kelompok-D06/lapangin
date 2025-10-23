@@ -27,11 +27,6 @@ class Lapangan(models.Model):
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00) 
     jumlah_ulasan = models.IntegerField(default=0) 
 
-    # TAMBAHKAN INI:
-    deskripsi = models.TextField(blank=True, default='')  # 
-    foto_utama = models.ImageField(upload_to='lapangan/', null=True, blank=True)  #
-    is_active = models.BooleanField(default=True)  # 
-
     def __str__(self):
         return f'{self.nama_lapangan} ({self.jenis_olahraga})'
 
