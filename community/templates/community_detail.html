@@ -8,80 +8,281 @@
     {% if community.community_image %}
       <img src="{{ community.community_image.url }}" alt="{{ community.community_name }}" class="object-cover w-full h-full">
     {% else %}
-      <img src="{% static 'images/default_community.jpg' %}" alt="default" class="object-cover w-full h-full">
+      <div class="w-full h-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center">
+        <i class="fas fa-users text-white text-8xl"></i>
+      </div>
     {% endif %}
+    <div class="absolute inset-0 bg-black bg-opacity-40 flex items-end p-8">
+      <div class="text-white">
+        <h1 class="text-4xl font-bold mb-2">{{ community.community_name }}</h1>
+        <p class="text-xl">{{ community.get_sports_type_display }} • {{ community.location }}</p>
+      </div>
+    </div>
   </div>
 
   <!-- Main Content -->
   <div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Left Content -->
+    <!-- Forum Posts (Left - 2/3) -->
     <div class="lg:col-span-2">
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ community.community_name }}</h1>
-      <p class="text-gray-600 text-sm mb-4">
-        {{ community.sports_type }} • <span class="text-yellow-600 font-semibold">{{ community.location }}</span>
-      </p>
-      <div class="flex items-center text-gray-700 mb-4">
-        <i class="fa fa-users mr-2 text-green-600"></i>
-        <span>{{ community.member_count }}</span>
-      </div>
-
-      <p class="text-gray-700 leading-relaxed mb-8">
-        {{ community.description }}
-      </p>
-
-      <!-- Media Sosial -->
-      <div class="mt-6">
-        <h3 class="text-lg font-semibold mb-2">Media Sosial</h3>
-        <div class="flex items-center gap-4">
-          <a href="#" class="text-pink-600 text-2xl hover:text-pink-800">
-            <i class="fab fa-instagram"></i>
-          </a>
-          <a href="#" class="text-green-600 text-2xl hover:text-green-800">
-            <i class="fab fa-whatsapp"></i>
-          </a>
-          <p class="text-gray-700 text-sm">@{{ community.community_name|lower|cut:" " }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right Sidebar (Join Box) -->
-    <div class="bg-white rounded-2xl shadow-md p-6 h-fit">
-      <h3 class="text-lg font-semibold mb-3 text-gray-800">Bergabung</h3>
-      <p class="text-gray-600 mb-4 text-sm">
-        {{ community.description|truncatewords:20 }}
-      </p>
-      <a href="#" class="block w-full text-center bg-lime-600 hover:bg-lime-700 text-white font-semibold py-2 rounded-lg transition">
-        Daftar
-      </a>
-    </div>
-  </div>
-
-  <!-- Komunitas Lainnya -->
-  <div class="max-w-7xl mx-auto px-6 pb-16">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Komunitas Lainnya</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {% for other in communities %}
-        {% if other.id != community.id %}
-        <div class="bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden">
-          {% if other.community_image %}
-            <img src="{{ other.community_image.url }}" class="w-full h-40 object-cover" alt="{{ other.community_name }}">
-          {% else %}
-            <img src="{% static 'images/default_community.jpg' %}" class="w-full h-40 object-cover" alt="default">
-          {% endif %}
-          <div class="p-4">
-            <h3 class="text-lg font-semibold">{{ other.community_name }}</h3>
-            <p class="text-gray-500 text-sm mb-2">
-              {{ other.sports_type }} • <span class="text-yellow-600">{{ other.location }}</span>
-            </p>
-            <p class="text-sm text-gray-600 mb-2">Join kuy</p>
-            <div class="flex justify-between items-center text-sm text-gray-500">
-              <span>👥 {{ other.member_count }}</span>
-              <a href="{% url 'show_detail_community' other.pk %}" class="text-lime-700 font-medium hover:underline">Cek Komunitas →</a>
-            </div>
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Tentang Komunitas</h2>
+        <p class="text-gray-700 leading-relaxed mb-4">{{ community.description }}</p>
+        
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="flex items-center text-gray-700">
+            <i class="fa fa-users mr-2 text-green-600"></i>
+            <span>{{ community.member_count }}/{{ community.max_member }} Anggota</span>
+          </div>
+          <div class="flex items-center text-gray-700">
+            <i class="fa fa-calendar mr-2 text-blue-600"></i>
+            <span>Dibuat: {{ community.date_added|date:"d M Y" }}</span>
+          </div>
+          <div class="flex items-center text-gray-700">
+            <i class="fa fa-user mr-2 text-purple-600"></i>
+            <span>Contact: {{ community.contact_person_name }}</span>
+          </div>
+          <div class="flex items-center text-gray-700">
+            <i class="fa fa-phone mr-2 text-orange-600"></i>
+            <span>{{ community.contact_phone|default:"N/A" }}</span>
           </div>
         </div>
+      </div>
+
+      <!-- Join/Leave Button -->
+      {% if user.is_authenticated %}
+        {% if is_member %}
+          <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded">
+            <div class="flex justify-between items-center">
+              <p class="text-green-800 font-semibold">
+                <i class="fas fa-check-circle mr-2"></i>
+                Anda adalah anggota komunitas ini
+              </p>
+              <form method="POST" action="{% url 'leave_community' community.pk %}">
+                {% csrf_token %}
+                <button type="submit" onclick="return confirm('Yakin ingin keluar dari komunitas ini?')"
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition">
+                  Keluar
+                </button>
+              </form>
+            </div>
+          </div>
+        {% else %}
+          <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+            <div class="flex justify-between items-center">
+              <p class="text-blue-800 font-semibold">
+                <i class="fas fa-info-circle mr-2"></i>
+                Bergabunglah untuk berpartisipasi dalam forum
+              </p>
+              <form method="POST" action="{% url 'join_community' community.pk %}">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="bg-primary hover:bg-[#5A6B4A] text-white px-6 py-2 rounded-lg font-semibold transition">
+                  <i class="fas fa-user-plus mr-2"></i> Gabung
+                </button>
+              </form>
+            </div>
+          </div>
         {% endif %}
-      {% endfor %}
+      {% else %}
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded">
+          <p class="text-yellow-800 font-semibold">
+            <i class="fas fa-lock mr-2"></i>
+            <a href="{% url 'authbooking:login' %}?next={{ request.path }}" class="underline hover:text-yellow-900">
+              Login
+            </a> untuk bergabung dan berpartisipasi dalam forum
+          </p>
+        </div>
+      {% endif %}
+
+      <!-- Create Post Form (Only for members) -->
+      {% if is_member %}
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 class="text-xl font-bold mb-4">Buat Post Baru</h3>
+        <form method="POST" action="{% url 'post_create' community.pk %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <textarea name="content" rows="4" 
+                    placeholder="Bagikan sesuatu dengan komunitas..."
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-primary mb-3"
+                    required></textarea>
+          
+          <div class="flex justify-between items-center">
+            <label class="cursor-pointer text-primary hover:text-[#5A6B4A] transition">
+              <i class="fas fa-image mr-2"></i> Upload Foto
+              <input type="file" name="image" accept="image/*" class="hidden">
+            </label>
+            <button type="submit" 
+                    class="bg-primary hover:bg-[#5A6B4A] text-white px-6 py-2 rounded-lg font-semibold transition">
+              <i class="fas fa-paper-plane mr-2"></i> Post
+            </button>
+          </div>
+        </form>
+      </div>
+      {% endif %}
+
+      <!-- Forum Posts -->
+      <div class="space-y-4">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">
+          <i class="fas fa-comments mr-2 text-primary"></i> Forum Diskusi
+        </h3>
+        
+        {% if posts %}
+          {% for post in posts %}
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <!-- Post Header -->
+            <div class ="flex items-start mb-4">
+              <div class="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg mr-4">
+                {{ post.user.username.0|upper }}
+              </div>
+              <div class="flex-1">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-800">{{ post.user.username }}</h4>
+                    <p class="text-sm text-gray-500">{{ post.created_at|date:"d M Y, H:i" }}</p>
+                  </div>
+                  {% if post.user == user or user.profile.role == 'PEMILIK' %}
+                  <form method="POST" action="{% url 'post_delete' post.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" onclick="return confirm('Yakin ingin menghapus post ini?')"
+                            class="text-red-500 hover:text-red-700 text-sm">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Post Content -->
+            <p class="text-gray-700 mb-4 whitespace-pre-line">{{ post.content }}</p>
+            
+            {% if post.image %}
+            <img src="{{ post.image.url }}" alt="Post image" class="rounded-lg max-h-96 w-full object-cover mb-4">
+            {% endif %}
+
+            <!-- Comments Section -->
+            <div class="border-t pt-4 mt-4">
+              <h5 class="font-semibold text-gray-700 mb-3">
+                <i class="fas fa-comment mr-1"></i> Komentar ({{ post.comments.count }})
+              </h5>
+              
+              <!-- Comment List -->
+              {% for comment in post.comments.all %}
+              <div class="flex items-start mb-3 pl-4 border-l-2 border-gray-200">
+                <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-sm mr-3">
+                  {{ comment.user.username.0|upper }}
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm">
+                    <span class="font-semibold text-gray-800">{{ comment.user.username }}</span>
+                    <span class="text-gray-500 text-xs ml-2">{{ comment.created_at|date:"d M Y, H:i" }}</span>
+                  </p>
+                  <p class="text-gray-700 text-sm mt-1">{{ comment.content }}</p>
+                </div>
+              </div>
+              {% endfor %}
+
+              <!-- Add Comment Form (Only for members) -->
+              {% if is_member %}
+              <form method="POST" action="{% url 'comment_create' post.pk %}" class="mt-3">
+                {% csrf_token %}
+                <div class="flex gap-2">
+                  <input type="text" name="content" 
+                         placeholder="Tulis komentar..."
+                         class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                         required>
+                  <button type="submit" 
+                          class="bg-primary hover:bg-[#5A6B4A] text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
+                    Kirim
+                  </button>
+                </div>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="bg-white rounded-lg shadow-md p-12 text-center">
+            <i class="fas fa-comments text-gray-300 text-6xl mb-4"></i>
+            <h4 class="text-xl font-semibold text-gray-600 mb-2">Belum Ada Post</h4>
+            <p class="text-gray-500">
+              {% if is_member %}
+              Jadilah yang pertama membuat post!
+              {% else %}
+              Bergabunglah untuk melihat dan membuat post.
+              {% endif %}
+            </p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Sidebar (1/3) -->
+    <div class="space-y-6">
+      <!-- Community Stats -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">Statistik</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600"><i class="fas fa-users mr-2 text-primary"></i> Anggota</span>
+            <span class="font-bold text-gray-800">{{ community.member_count }}/{{ community.max_member }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600"><i class="fas fa-comment mr-2 text-blue-500"></i> Posts</span>
+            <span class="font-bold text-gray-800">{{ posts.count }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600"><i class="fas fa-calendar mr-2 text-green-500"></i> Dibuat</span>
+            <span class="font-bold text-gray-800">{{ community.date_added|date:"M Y" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Info -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">Admin Komunitas</h3>
+        <div class="flex items-center">
+          <div class="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg mr-3">
+            {{ community.created_by.username.0|upper }}
+          </div>
+          <div>
+            <p class="font-semibold text-gray-800">{{ community.created_by.username }}</p>
+            <p class="text-sm text-gray-500">Founder</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other Communities -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">Komunitas Lainnya</h3>
+        <div class="space-y-3">
+          {% for other in communities %}
+          <a href="{% url 'show_detail_community' other.pk %}" 
+             class="block hover:bg-gray-50 p-3 rounded-lg transition">
+            <div class="flex items-center">
+              {% if other.community_image %}
+              <img src="{{ other.community_image.url }}" 
+                   class="w-12 h-12 rounded-lg object-cover mr-3"
+                   alt="{{ other.community_name }}">
+              {% else %}
+              <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center mr-3">
+                <i class="fas fa-users text-white"></i>
+              </div>
+              {% endif %}
+              <div class="flex-1">
+                <h4 class="font-semibold text-gray-800 text-sm">{{ other.community_name|truncatewords:3 }}</h4>
+                <p class="text-xs text-gray-500">
+                  {{ other.get_sports_type_display }} • {{ other.member_count }} anggota
+                </p>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        <a href="{% url 'show_community_page' %}" 
+           class="block text-center mt-4 text-primary hover:underline text-sm font-semibold">
+          Lihat Semua Komunitas →
+        </a>
+      </div>
     </div>
   </div>
 </div>

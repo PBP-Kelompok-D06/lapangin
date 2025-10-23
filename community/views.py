@@ -1,57 +1,417 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from community.forms import CommunityForm
-from community.models import Community
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
 from django.http import HttpResponse
 from django.core import serializers
+from django.db.models import Q, Count
+from .models import Community, CommunityMember, CommunityPost, PostComment, CommunityRequest
 
+def is_pemilik(user):
+    """Cek apakah user adalah PEMILIK"""
+    return hasattr(user, 'profile') and user.profile.role == 'PEMILIK'
+
+# ==================== PUBLIC VIEWS ====================
 
 def show_community_page(request):
-    communities = Community.objects.all()
+    """Halaman utama community - tampilan public"""
+    jenis_filter = request.GET.get('jenis', '')
+    lokasi_filter = request.GET.get('lokasi', '')
+    search = request.GET.get('search', '')
+    
+    communities = Community.objects.filter(is_active=True).annotate(
+        total_members=Count('members', filter=Q(members__is_active=True))
+    )
+    
+    if jenis_filter:
+        communities = communities.filter(sports_type=jenis_filter)
+    if lokasi_filter:
+        communities = communities.filter(location__icontains=lokasi_filter)
+    if search:
+        communities = communities.filter(
+            Q(community_name__icontains=search) | Q(description__icontains=search)
+        )
+    
     context = {
         'communities': communities,
-        'show_navbar': True  # Menambahkan konteks untuk menampilkan navbar
+        'show_navbar': True,
     }
-    
     return render(request, 'community.html', context)
 
-def community_detail(request, pk):
-    community = get_object_or_404(Community, pk=pk)
-    communities = Community.objects.exclude(pk=pk)  # biar gak nampilin dirinya sendiri
 
+def community_detail(request, pk):
+    """Detail komunitas dengan forum"""
+    community = get_object_or_404(Community, pk=pk, is_active=True)
+    
+    # Cek apakah user sudah join
+    is_member = False
+    if request.user.is_authenticated:
+        is_member = CommunityMember.objects.filter(
+            community=community, 
+            user=request.user,
+            is_active=True
+        ).exists()
+    
+    # Ambil posts
+    posts = CommunityPost.objects.filter(community=community).select_related(
+        'user'
+    ).prefetch_related('comments__user')[:20]
+    
+    # Update member count (sinkronisasi)
+    community.member_count = community.members.filter(is_active=True).count()
+    community.save()
+    
+    # Komunitas lainnya
+    other_communities = Community.objects.filter(
+        is_active=True
+    ).exclude(pk=pk)[:3]
+    
     context = {
         'community': community,
-        'communities': communities,
-        'show_navbar': True  # Menambahkan konteks untuk menampilkan navbar
+        'is_member': is_member,
+        'posts': posts,
+        'communities': other_communities,
+        'show_navbar': True,
     }
     return render(request, 'community_detail.html', context)
+
+
+@login_required
+def join_community(request, pk):
+    """Join komunitas"""
+    community = get_object_or_404(Community, pk=pk, is_active=True)
+    
+    # Cek apakah sudah full
+    if community.member_count >= community.max_member:
+        messages.error(request, 'Komunitas sudah penuh!')
+        return redirect('show_detail_community', pk=pk)
+    
+    # Cek apakah sudah join
+    member, created = CommunityMember.objects.get_or_create(
+        community=community,
+        user=request.user,
+        defaults={'is_active': True}
+    )
+    
+    if not created:
+        if member.is_active:
+            messages.info(request, 'Anda sudah menjadi anggota komunitas ini.')
+        else:
+            member.is_active = True
+            member.save()
+            # Update member count
+            community.member_count = community.members.filter(is_active=True).count()
+            community.save()
+            messages.success(request, f'Selamat! Anda berhasil bergabung kembali dengan {community.community_name}')
+    else:
+        # Update member count
+        community.member_count = community.members.filter(is_active=True).count()
+        community.save()
+        messages.success(request, f'Selamat! Anda berhasil bergabung dengan {community.community_name}')
+    
+    return redirect('show_detail_community', pk=pk)
+
+
+@login_required
+def leave_community(request, pk):
+    """Leave komunitas"""
+    community = get_object_or_404(Community, pk=pk)
+    
+    try:
+        member = CommunityMember.objects.get(
+            community=community,
+            user=request.user
+        )
+        member.is_active = False
+        member.save()
+        
+        # Update member count
+        community.member_count = community.members.filter(is_active=True).count()
+        community.save()
+        
+        messages.success(request, f'Anda telah keluar dari {community.community_name}')
+    except CommunityMember.DoesNotExist:
+        messages.error(request, 'Anda bukan anggota komunitas ini.')
+    
+    return redirect('show_community_page')
+
+
+# ==================== FORUM FEATURES ====================
+
+@login_required
+def post_create(request, pk):
+    """Buat post baru di komunitas"""
+    community = get_object_or_404(Community, pk=pk)
+    
+    # Cek apakah user adalah anggota
+    if not CommunityMember.objects.filter(
+        community=community, 
+        user=request.user,
+        is_active=True
+    ).exists():
+        messages.error(request, 'Anda harus menjadi anggota untuk membuat post.')
+        return redirect('show_detail_community', pk=pk)
+    
+    if request.method == 'POST':
+        content = request.POST.get('content', '').strip()
+        if content:
+            post = CommunityPost.objects.create(
+                community=community,
+                user=request.user,
+                content=content
+            )
+            
+            if request.FILES.get('image'):
+                post.image = request.FILES['image']
+                post.save()
+            
+            messages.success(request, 'Post berhasil dibuat!')
+        else:
+            messages.error(request, 'Konten post tidak boleh kosong.')
+    
+    return redirect('show_detail_community', pk=pk)
+
+
+@login_required
+def post_delete(request, pk):
+    """Hapus post"""
+    post = get_object_or_404(CommunityPost, pk=pk)
+    
+    # Hanya pembuat post atau admin yang bisa hapus
+    if post.user != request.user and not is_pemilik(request.user):
+        messages.error(request, 'Anda tidak memiliki izin untuk menghapus post ini.')
+        return redirect('show_detail_community', pk=post.community.pk)
+    
+    community_pk = post.community.pk
+    post.delete()
+    messages.success(request, 'Post berhasil dihapus.')
+    
+    return redirect('show_detail_community', pk=community_pk)
+
+
+@login_required
+def comment_create(request, pk):
+    """Buat komentar pada post"""
+    post = get_object_or_404(CommunityPost, pk=pk)
+    
+    # Cek apakah user adalah anggota
+    if not CommunityMember.objects.filter(
+        community=post.community, 
+        user=request.user,
+        is_active=True
+    ).exists():
+        messages.error(request, 'Anda harus menjadi anggota untuk berkomentar.')
+        return redirect('show_detail_community', pk=post.community.pk)
+    
+    if request.method == 'POST':
+        content = request.POST.get('content', '').strip()
+        if content:
+            PostComment.objects.create(
+                post=post,
+                user=request.user,
+                content=content
+            )
+            messages.success(request, 'Komentar berhasil ditambahkan!')
+        else:
+            messages.error(request, 'Komentar tidak boleh kosong.')
+    
+    return redirect('show_detail_community', pk=post.community.pk)
+
+
+# ==================== REQUEST KOMUNITAS (MEMBER) ====================
+
+@login_required
+def request_community_create(request):
+    """Member membuat request komunitas baru"""
+    if request.method == 'POST':
+        CommunityRequest.objects.create(
+            requester=request.user,
+            community_name=request.POST.get('community_name'),
+            description=request.POST.get('description'),
+            sports_type=request.POST.get('sports_type'),
+            location_preference=request.POST.get('location_preference')
+        )
+        messages.success(request, 'Request komunitas berhasil dikirim! Tunggu persetujuan admin.')
+        return redirect('my_community_requests')
+    
+    context = {'show_navbar': True}
+    return render(request, 'community_request_create.html', context)
+
+
+@login_required
+def my_community_requests(request):
+    """Daftar request komunitas user"""
+    requests = CommunityRequest.objects.filter(requester=request.user)
+    context = {
+        'requests': requests,
+        'show_navbar': True,
+    }
+    return render(request, 'my_community_requests.html', context)
+
+
+# ==================== ADMIN VIEWS (untuk Admin Dashboard) ====================
+
+@login_required
+@user_passes_test(is_pemilik)
+def admin_community_list(request):
+    """Daftar komunitas untuk admin"""
+    jenis_filter = request.GET.get('jenis', '')
+    lokasi_filter = request.GET.get('lokasi', '')
+    
+    communities = Community.objects.filter(created_by=request.user).annotate(
+        total_members=Count('members', filter=Q(members__is_active=True))
+    )
+    
+    if jenis_filter:
+        communities = communities.filter(sports_type=jenis_filter)
+    if lokasi_filter:
+        communities = communities.filter(location__icontains=lokasi_filter)
+    
+    context = {
+        'community_list': communities,
+    }
+    return render(request, 'admin_community_list.html', context)
+
+
+@login_required
+@user_passes_test(is_pemilik)
+def admin_community_create(request):
+    """Admin membuat komunitas baru"""
+    if request.method == 'POST':
+        try:
+            community = Community.objects.create(
+                community_name=request.POST.get('community_name'),
+                description=request.POST.get('description'),
+                location=request.POST.get('location'),
+                sports_type=request.POST.get('sports_type'),
+                max_member=request.POST.get('max_member', 50),
+                contact_person_name=request.POST.get('contact_person_name', request.user.username),
+                contact_phone=request.POST.get('contact_phone', ''),
+                created_by=request.user
+            )
+            
+            if request.FILES.get('community_image'):
+                community.community_image = request.FILES['community_image']
+                community.save()
+            
+            messages.success(request, 'Komunitas berhasil dibuat!')
+            return redirect('admin_community_list')
+            
+        except Exception as e:
+            messages.error(request, f'Terjadi kesalahan: {str(e)}')
+    
+    return render(request, 'admin_community_form.html')
+
+
+@login_required
+@user_passes_test(is_pemilik)
+def admin_community_edit(request, pk):
+    """Edit komunitas"""
+    community = get_object_or_404(Community, pk=pk, created_by=request.user)
+    
+    if request.method == 'POST':
+        try:
+            community.community_name = request.POST.get('community_name')
+            community.description = request.POST.get('description')
+            community.location = request.POST.get('location')
+            community.sports_type = request.POST.get('sports_type')
+            community.max_member = request.POST.get('max_member', 50)
+            community.contact_person_name = request.POST.get('contact_person_name', request.user.username)
+            community.contact_phone = request.POST.get('contact_phone', '')
+            
+            if request.FILES.get('community_image'):
+                community.community_image = request.FILES['community_image']
+            
+            community.save()
+            
+            messages.success(request, 'Komunitas berhasil diupdate!')
+            return redirect('admin_community_list')
+            
+        except Exception as e:
+            messages.error(request, f'Terjadi kesalahan: {str(e)}')
+    
+    context = {'community': community}
+    return render(request, 'admin_community_form.html', context)
+
+
+@login_required
+@user_passes_test(is_pemilik)
+def admin_community_delete(request, pk):
+    """Hapus komunitas"""
+    community = get_object_or_404(Community, pk=pk, created_by=request.user)
+    
+    if request.method == 'POST':
+        community.delete()
+        messages.success(request, 'Komunitas berhasil dihapus!')
+        return redirect('admin_community_list')
+    
+    return render(request, 'admin_community_confirm_delete.html', {'community': community})
+
+
+@login_required
+@user_passes_test(is_pemilik)
+def admin_request_list(request):
+    """Daftar request komunitas dari member"""
+    requests = CommunityRequest.objects.filter(status='pending')
+    
+    context = {'requests': requests}
+    return render(request, 'admin_request_list.html', context)
+
+
+@login_required
+@user_passes_test(is_pemilik)
+def admin_request_approve(request, pk):
+    """Approve request dan buat komunitas baru"""
+    req = get_object_or_404(CommunityRequest, pk=pk)
+    
+    if request.method == 'POST':
+        Community.objects.create(
+            community_name=req.community_name,
+            description=req.description,
+            location=req.location_preference,
+            sports_type=req.sports_type,
+            max_member=50,
+            contact_person_name=request.user.username,
+            contact_phone='',
+            created_by=request.user
+        )
+        
+        req.status = 'approved'
+        req.admin_notes = request.POST.get('admin_notes', '')
+        req.save()
+        
+        messages.success(request, 'Request berhasil diapprove dan komunitas telah dibuat!')
+        return redirect('admin_request_list')
+    
+    return render(request, 'admin_request_approve.html', {'request': req})
+
+
+@login_required
+@user_passes_test(is_pemilik)
+def admin_request_reject(request, pk):
+    """Reject request komunitas"""
+    req = get_object_or_404(CommunityRequest, pk=pk)
+    
+    if request.method == 'POST':
+        req.status = 'rejected'
+        req.admin_notes = request.POST.get('admin_notes', '')
+        req.save()
+        
+        messages.success(request, 'Request berhasil ditolak!')
+        return redirect('admin_request_list')
+    
+    return render(request, 'admin_request_reject.html', {'request': req})
+
+
+# ==================== EXISTING VIEWS  ====================
 
 def delete_community(request, pk):
     community = get_object_or_404(Community, pk=pk)
     if request.method == 'POST':
         community.delete()
-        return redirect('community_list')
+        return redirect('show_community_page')
     return render(request, 'delete_community.html', {'community': community})
 
-def edit_community(request, pk):
-    community = get_object_or_404(Community, pk=pk)
-    if request.method == 'POST':
-        form = CommunityForm(request.POST, request.FILES, instance=community)
-        if form.is_valid():
-            form.save()
-            return redirect('community_detail', pk=community.pk)
-    else:
-        form = CommunityForm(instance=community)
-    return render(request, 'edit_community.html', {'form': form})
 
-def join_community(request, pk):
-    community = get_object_or_404(Community, pk=pk)
-    if community.member_count < community.max_member:
-        community.member_count += 1
-        community.save()
-        return redirect('community_detail', pk=community.pk)
-    else:
-        return render(request, 'community.html', {'community': community})
-        
 def search_communities(request):
     query = request.GET.get('q')
     if query:
@@ -60,30 +420,26 @@ def search_communities(request):
         communities = Community.objects.all()
     return render(request, 'community.html', {'communities': communities})
 
+
 def filter_communities_by_sport(request, sport_type):
     communities = Community.objects.filter(sports_type=sport_type)
     return render(request, 'community.html', {'communities': communities})
 
-def join_community(request, pk):
-    community = get_object_or_404(Community, pk=pk)
-    if community.member_count < community.max_member:
-        community.member_count += 1
-        community.save()
-        return redirect('community_detail', pk=community.pk)
-    else:
-        return render(request, 'community.html', {'community': community})
 
 def show_xml(request):
     data = serializers.serialize("xml", Community.objects.all())
     return HttpResponse(data, content_type="application/xml")
 
+
 def show_json(request):
     data = serializers.serialize("json", Community.objects.all())
     return HttpResponse(data, content_type="application/json")
 
+
 def show_xml_by_id(request, id):
     data = serializers.serialize("xml", Community.objects.filter(pk=id))
     return HttpResponse(data, content_type="application/xml")
+
 
 def show_json_by_id(request, id):
     data = serializers.serialize("json", Community.objects.filter(pk=id))

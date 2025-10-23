@@ -13,15 +13,15 @@ urlpatterns = [
     path('lapangan/<int:pk>/edit/', views.lapangan_edit, name='lapangan_edit'),
     path('lapangan/<int:pk>/delete/', views.lapangan_delete, name='lapangan_delete'),
     
-    # Booking Management (NEW!)
+    # Booking Management
     path('booking/', views.booking_pending_list, name='booking_pending'),
     path('booking/<int:pk>/approve/', views.booking_approve, name='booking_approve'),
     path('booking/<int:pk>/reject/', views.booking_reject, name='booking_reject'),
     
-    # Transaksi/Riwayat (NEW!)
+    # Transaksi/Riwayat
     path('transaksi/', views.transaksi_list, name='transaksi_list'),
 
-    #Booking
+    # Booking Sessions
     path('booking-sessions/', views.booking_sessions_list, name='booking_sessions_list'),
     path('booking-sessions/create/', views.booking_sessions_create, name='booking_sessions_create'),
     path('booking-sessions/<int:pk>/delete/', views.booking_session_delete, name='booking_session_delete'),
