@@ -25,6 +25,8 @@ urlpatterns = [
     path('', include('main.urls')),
     path('booking/', include('booking.urls')), 
     path('accounts/', include('authbooking.urls')),
+    path('review/', include('review.urls')),
+    path('gallery/', include('gallery.urls')),
     path('community/', include('community.urls')),  
     path('dashboard/', include('admin_dashboard.urls')),
 ]

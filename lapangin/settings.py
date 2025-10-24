@@ -46,7 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'authbooking',
     'booking',
+    'review',
     'main',
+    'gallery',
     'community', 
     'admin_dashboard',
 ]

@@ -31,6 +31,19 @@ class Lapangan(models.Model):
 
     def __str__(self):
         return f'{self.nama_lapangan} ({self.jenis_olahraga})'
+    
+    def update_rating(self):
+        from review.models import Review
+        from django.db.models import Avg
+        
+        reviews = Review.objects.filter(field=self)
+        jumlah = reviews.count()
+        rata_rata = reviews.aggregate(Avg('rating'))['rating__avg'] or 0.00
+        
+        self.jumlah_ulasan = jumlah
+        self.rating = round(rata_rata, 2)
+        self.save()
+
 # 2. Model Slot Tersedia (Initial Dataset 100+)
 class SlotTersedia(models.Model):
     lapangan = models.ForeignKey(

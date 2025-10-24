@@ -108,8 +108,10 @@
               <span class="ml-1 text-gray-700 text-sm">{{ lap.rating|floatformat:1|default:"0.0" }}</span> {# <-- Format rating #}
               <span class="text-gray-500 text-xs ml-1">({{ lap.jumlah_ulasan }})</span>
             </div>
-            {# Tautan ke halaman booking (contoh) #}
-            <a href="{% url 'booking:show_booking_page' %}?lapangan_id={{ lap.pk }}" class="text-sm text-[#a7bf6e] hover:underline font-semibold">Cek Jadwal →</a>
+            <a href="{% url 'gallery:show_gallery' lap_id=lap.pk %}" 
+              class="text-sm text-[#a7bf6e] hover:underline">
+              Cek Lapangan →
+            </a>
           </div>
         </div>
       </div>
@@ -118,6 +120,7 @@
     {% endfor %}
   </div>
 
+  <!-- Navigasi Page -->
   <div class="flex justify-center items-center mt-8 mb-4 space-x-2">
     {% if page_obj.has_previous %}
       <a href="?page={{ page_obj.previous_page_number }}{% if selected_jenis != 'all' %}&jenis={{ selected_jenis }}{% endif %}{% if selected_rating != 'all' %}&rating={{ selected_rating }}{% endif %}"
