@@ -12,7 +12,7 @@
             <div class="hidden md:flex space-x-8">
                 <a href="{% url 'main:home' %}" class="text-[#4F4F4F] hover:text-primary font-medium transition duration-150">Home</a> 
                 <a href="{% url 'community:show_community_page' %}" class="text-[#4F4F4F] hover:text-primary font-medium transition duration-150">Community</a> 
-                <a href="#" class="text-[#4F4F4F] hover:text-primary font-medium transition duration-150">My Bookings</a> 
+                <a href="{% url 'booking:my_bookings' %}" class="text-[#4F4F4F] hover:text-primary font-medium transition duration-150">My Bookings</a> 
             </div>
             
             <div class="flex items-center space-x-4">

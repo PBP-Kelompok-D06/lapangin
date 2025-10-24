@@ -90,7 +90,7 @@ def join_community(request, pk):
     # Cek apakah sudah full
     if community.member_count >= community.max_member:
         messages.error(request, 'Komunitas sudah penuh!')
-        return redirect('show_detail_community', pk=pk)
+        return redirect('community:show_detail_community', pk=pk)
     
     # Cek apakah sudah join
     member, created = CommunityMember.objects.get_or_create(
@@ -115,7 +115,7 @@ def join_community(request, pk):
         community.save()
         messages.success(request, f'Selamat! Anda berhasil bergabung dengan {community.community_name}')
     
-    return redirect('show_detail_community', pk=pk)
+    return redirect('community:show_detail_community', pk=pk)
 
 
 @login_required
@@ -139,7 +139,7 @@ def leave_community(request, pk):
     except CommunityMember.DoesNotExist:
         messages.error(request, 'Anda bukan anggota komunitas ini.')
     
-    return redirect('show_community_page')
+    return redirect('community:show_community_page')
 
 # ==================== FORUM FEATURES ====================
 
@@ -154,7 +154,7 @@ def post_create(request, pk):
         if is_ajax:
             return JsonResponse({'success': False, 'error': 'Anda harus menjadi anggota untuk membuat post.'}, status=403)
         messages.error(request, 'Anda harus menjadi anggota untuk membuat post.')
-        return redirect('show_detail_community', pk=pk)
+        return redirect('community:show_community_page', pk=pk)
 
     if request.method == 'POST':
         content = request.POST.get('content', '').strip()
@@ -164,7 +164,7 @@ def post_create(request, pk):
             if is_ajax:
                 return JsonResponse({'success': False, 'error': 'Konten post tidak boleh kosong.'}, status=400)
             messages.error(request, 'Konten post tidak boleh kosong.')
-            return redirect('show_detail_community', pk=pk)
+            return redirect('community:show_community_page', pk=pk)
 
         post = CommunityPost.objects.create(
             community=community,
@@ -193,7 +193,7 @@ def post_create(request, pk):
 
         messages.success(request, 'Post berhasil dibuat!')
     
-    return redirect('show_detail_community', pk=pk)
+    return redirect('community:show_community_page', pk=pk)
 
 
 @login_required
@@ -204,13 +204,13 @@ def post_delete(request, pk):
     # Hanya pembuat post atau admin yang bisa hapus
     if post.user != request.user and not is_pemilik(request.user):
         messages.error(request, 'Anda tidak memiliki izin untuk menghapus post ini.')
-        return redirect('show_detail_community', pk=post.community.pk)
+        return redirect('community:show_detail_community', pk=post.community.pk)
     
     community_pk = post.community.pk
     post.delete()
     messages.success(request, 'Post berhasil dihapus.')
     
-    return redirect('show_detail_community', pk=community_pk)
+    return redirect('community:show_detail_community', pk=community_pk)
 
 
 @login_required
@@ -224,7 +224,7 @@ def comment_create(request, pk):
         if is_ajax:
             return JsonResponse({'success': False, 'error': 'Anda harus menjadi anggota untuk berkomentar.'}, status=403)
         messages.error(request, 'Anda harus menjadi anggota untuk berkomentar.')
-        return redirect('show_detail_community', pk=post.community.pk)
+        return redirect('community:show_detail_community', pk=post.community.pk)
     
     if request.method == 'POST':
         content = request.POST.get('content', '').strip()
@@ -255,7 +255,7 @@ def comment_create(request, pk):
                 return JsonResponse({'success': False, 'error': 'Komentar tidak boleh kosong.'}, status=400)
             messages.error(request, 'Komentar tidak boleh kosong.')
     
-    return redirect('show_detail_community', pk=post.community.pk)
+    return redirect('community:show_detail_community', pk=post.community.pk)
 
 
 # ==================== REQUEST KOMUNITAS (MEMBER) ====================

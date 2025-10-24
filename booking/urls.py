@@ -20,4 +20,6 @@ urlpatterns = [
     # Path 4: Endpoint AJAX untuk update status card booking session 
     # URL: booking/check-status/
     path('check-status/', views.check_slot_status, name='check_slot_status'), 
+
+    path('my-bookings/', views.my_bookings, name='my_bookings'),
 ]
