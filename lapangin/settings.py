@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'authbooking',
     'booking',
     'main',
+    'gallery',
 ]
 
 MIDDLEWARE = [

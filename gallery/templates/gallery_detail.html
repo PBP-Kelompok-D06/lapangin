@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ lapangan.nama_lapangan }} - Gallery{% endblock %}
+
+{% block content %}
+<section class="min-h-screen pb-16 bg-gray-50">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Hero + Thumbnails -->
+    <div class="mb-8">
+      <div class="relative">
+        <!-- Hero Image -->
+        <div class="rounded-2xl overflow-hidden shadow-md">
+          <img id="hero-image"
+               src="{% static hero_images.0 %}"
+               alt="{{ lapangan.nama_lapangan }}"
+               class="w-full h-[60vh] md:h-[50vh] lg:h-[60vh] object-cover transition-opacity duration-300">
+        </div>
+
+        <!-- Thumbnails (overlap style) -->
+        <div class="absolute left-0 right-0 -bottom-16 flex justify-center pointer-events-none">
+          <div id="thumbnail-wrapper" class="pointer-events-auto">
+            <div id="thumbnail-container" class="flex gap-4 items-center bg-transparent px-4">
+              <button id="gallery-prev" aria-label="Previous thumbnails"
+                      class="flex-shrink-0 bg-[#a7bf6e] hover:bg-[#8fa35a] text-white rounded-full w-10 h-10 flex items-center justify-center shadow hidden md:flex">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              {% for img in gallery_images %}
+                <img src="{% static img %}"
+                     data-src="{% static img %}"
+                     alt="{{ lapangan.nama_lapangan }} thumbnail {{ forloop.counter }}"
+                     class="thumbnail rounded-xl h-28 md:h-32 w-auto object-cover cursor-pointer shadow-lg border-4 border-white flex-shrink-0 transition-transform duration-150">
+              {% endfor %}
+
+              <button id="gallery-next" aria-label="Next thumbnails"
+                      class="flex-shrink-0 bg-[#a7bf6e] hover:bg-[#8fa35a] text-white rounded-full w-10 h-10 flex items-center justify-center shadow hidden md:flex">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content card -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8 pt-20">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: title, rating, fasilitas, deskripsi -->
+        <div class="lg:col-span-2">
+          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">{{ lapangan.nama_lapangan }}</h1>
+
+          <!-- Rating -->
+          <div class="flex items-center gap-3 mb-4">
+            <div class="flex items-center text-yellow-400 text-lg">
+              {% for i in "12345" %}
+                {% if forloop.counter <= lapangan.rating|floatformat:0 %}
+                  <i class="fas fa-star"></i>
+                {% else %}
+                  <i class="far fa-star"></i>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <div class="text-sm text-gray-600">({{ lapangan.jumlah_ulasan }} ulasan)</div>
+          </div>
+
+          <!-- Fasilitas -->
+          <div class="mb-6">
+            <h3 class="text-md font-semibold text-gray-800 mb-2">Fasilitas</h3>
+            <div class="flex flex-wrap gap-2">
+              {% for f in fasilitas_list %}
+                <span class="bg-[#dfeecd] text-gray-800 text-sm px-3 py-1 rounded-full">{{ f }}</span>
+              {% empty %}
+                <span class="text-gray-500 text-sm">Tidak ada fasilitas terdaftar.</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Deskripsi -->
+          <div class="mb-6">
+            <h3 class="text-md font-semibold text-gray-800 mb-2">Deskripsi</h3>
+            <p class="text-gray-600 text-sm leading-relaxed text-justify">
+              {% if lapangan.deskripsi %}
+                {{ lapangan.deskripsi }}
+              {% else %}
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ornare
+                volutpat turpis ut cursus. Morbi enim massa, dignissim id dictum sit amet,
+                finibus dictum nisi.
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Media Sosial / Kontak -->
+          <div class="mt-4">
+            <h3 class="text-md font-semibold text-gray-800 mb-3">Kontak & Media Sosial</h3>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+              {% if nomor_whatsapp %}
+                <a href="https://wa.me/{{ nomor_whatsapp }}?text=Halo%20saya%20ingin%20booking%20{{ lapangan.nama_lapangan|urlencode }}"
+                   target="_blank"
+                   class="flex items-center gap-3 text-gray-900 hover:text-green-700">
+                  <div class="bg-green-500 rounded-full p-2">
+                    <i class="fab fa-whatsapp text-white text-lg"></i>
+                  </div>
+                  <span class="text-sm font-medium">{{ lapangan.pengelola.nomor_whatsapp }}</span>
+                </a>
+              {% else %}
+                <div class="text-sm text-gray-500">Nomor WhatsApp pengelola tidak tersedia.</div>
+              {% endif %}
+
+              {% if lapangan.pengelola.instagram %}
+                <a href="https://instagram.com/{{ lapangan.pengelola.instagram|cut:'@' }}" target="_blank"
+                   class="flex items-center gap-3 text-pink-600 hover:text-pink-700">
+                  <div class="bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-full p-2">
+                    <i class="fab fa-instagram text-white"></i>
+                  </div>
+                  <span class="text-sm font-medium">@{{ lapangan.pengelola.instagram|cut:'@' }}</span>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: price + booking -->
+        <div class="flex flex-col items-start lg:items-end justify-between">
+          <div class="text-right">
+            <p class="text-2xl sm:text-3xl font-bold text-[#a7bf6e]">Rp {{ lapangan.harga_per_jam|floatformat:0 }}</p>
+            <p class="text-gray-500 text-sm mb-4">/jam</p>
+          </div>
+
+          <div class="w-full">
+            {% if nomor_whatsapp %}
+              <a href="https://wa.me/{{ nomor_whatsapp }}?text=Halo%20saya%20ingin%20booking%20{{ lapangan.nama_lapangan|urlencode }}"
+                 target="_blank"
+                 class="block w-full bg-[#a7bf6e] hover:bg-[#8fa35a] text-white text-sm font-semibold px-6 py-3 rounded-lg shadow-md text-center">
+                Booking Sekarang!
+              </a>
+            {% else %}
+              <button disabled
+                      class="block w-full bg-gray-200 text-gray-500 text-sm font-semibold px-6 py-3 rounded-lg text-center cursor-not-allowed">
+                Nomor WA Tidak Tersedia
+              </button>
+            {% endif %}
+            <p class="text-xs text-gray-400 mt-2">Klik untuk chat pemilik via WhatsApp.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const heroImage = document.getElementById('hero-image');
+  const thumbnails = document.querySelectorAll('.thumbnail');
+  const galleryContainer = document.getElementById('thumbnail-container');
+  const prevBtn = document.getElementById('gallery-prev');
+  const nextBtn = document.getElementById('gallery-next');
+
+  // mark first thumbnail active
+  function clearActive() {
+    thumbnails.forEach(t => {
+      t.classList.remove('ring-4', 'ring-[#a7bf6e]', 'scale-105', 'translate-y-0');
+      t.style.transform = '';
+    });
+  }
+
+  if (thumbnails.length > 0) {
+    clearActive();
+    thumbnails[0].classList.add('ring-4', 'ring-[#a7bf6e]', 'scale-105');
+  }
+
+  thumbnails.forEach((thumb) => {
+    thumb.addEventListener('click', () => {
+      const src = thumb.dataset.src || thumb.src;
+      // fade out / in
+      heroImage.classList.add('opacity-0');
+      setTimeout(() => {
+        heroImage.src = src;
+        heroImage.classList.remove('opacity-0');
+      }, 120);
+
+      clearActive();
+      thumb.classList.add('ring-4', 'ring-[#a7bf6e]', 'scale-105');
+      // ensure visible
+      thumb.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+    });
+
+    // keyboard accessibility
+    thumb.setAttribute('tabindex', '0');
+    thumb.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') thumb.click();
+    });
+  });
+
+  // thumbnail scroll buttons (only visible desktop)
+  if (prevBtn && nextBtn && galleryContainer) {
+    prevBtn.addEventListener('click', () => galleryContainer.scrollBy({ left: -280, behavior: 'smooth' }));
+    nextBtn.addEventListener('click', () => galleryContainer.scrollBy({ left: 280, behavior: 'smooth' }));
+  }
+});
+</script>
+{% endblock %}

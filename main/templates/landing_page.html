@@ -128,11 +128,10 @@
               <span class="ml-1 text-gray-700 text-sm">{{ lap.rating }}</span>
               <span class="text-gray-500 text-xs ml-1">({{ lap.jumlah_ulasan }})</span>
             </div>
-            <a href="#" class="text-sm text-[#a7bf6e] hover:underline">Cek Lapangan →</a>
-            {% comment %}
-            pake ini kalo link gallery udah ada
-            <a href="{% url 'gallery:show_gallery' lap_id=lap.pk %}" class="text-sm text-[#a7bf6e] hover:underline">Cek Lapangan →</a>
-            {% endcomment %}
+            <a href="{% url 'gallery:show_gallery' lap_id=lap.pk %}" 
+              class="text-sm text-[#a7bf6e] hover:underline">
+              Cek Lapangan →
+            </a>
           </div>
         </div>
       </div>
