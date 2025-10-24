@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Community, CommunityMember, CommunityPost, PostComment, CommunityRequest, Lapangan, SlotTersedia, Booking
+from .models import Community, CommunityMember, CommunityPost, PostComment, CommunityRequest
 
 @admin.register(Community)
 class CommunityAdmin(admin.ModelAdmin):
