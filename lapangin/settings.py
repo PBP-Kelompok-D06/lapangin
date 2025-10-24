@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'booking',
     'review',
     'main',
+    'gallery',
 ]
 
 MIDDLEWARE = [

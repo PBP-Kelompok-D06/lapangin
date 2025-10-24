@@ -20,10 +20,14 @@ def show_booking_page(request):
     selected_date_str = request.GET.get('date') # Ambil string tanggal dari URL
     
     # Tentukan Lapangan yang akan ditampilkan
-    if lapangan_id_filter:
-        lapangan_terpilih = get_object_or_404(all_lapangan, pk=lapangan_id_filter)
-    else:
-        lapangan_terpilih = all_lapangan.first()
+    try:
+        if lapangan_id_filter:
+            lapangan_terpilih = get_object_or_404(Lapangan, pk=lapangan_id_filter)
+        else:
+            lapangan_terpilih = Lapangan.objects.first()
+    except Lapangan.DoesNotExist:
+        return render(request, 'error.html', {'message': 'Lapangan tidak ditemukan.'})
+
     
     if not lapangan_terpilih:
         # Perbaikan Path Template: Menggunakan path lengkap 'login.html'

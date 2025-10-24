@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ lapangan.nama_lapangan }} - Gallery{% endblock %}
+
+{% block content %}
+<section class="min-h-screen pb-16 bg-gray-50">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Hero + Thumbnails -->
+    <div class="mb-8">
+      <div class="relative">
+        <!-- Hero Image -->
+        <div class="rounded-xl overflow-hidden shadow-md">
+          <img id="hero-image"
+               src="{% static hero_images.0 %}"
+               alt="{{ lapangan.nama_lapangan }}"
+               class="w-full h-[60vh] md:h-[50vh] lg:h-[60vh] object-cover transition-opacity duration-300">
+        </div>
+
+    <!-- Thumbnails (overlap style) -->
+    <div class="absolute left-0 right-0 -bottom-14 flex justify-center pointer-events-none">
+      <div id="thumbnail-wrapper" class="pointer-events-auto">
+        <div id="thumbnail-container"
+            class="flex gap-3 sm:gap-4 items-center justify-center bg-transparent px-2 sm:px-4 flex-wrap sm:flex-nowrap">
+
+            {% for img in gallery_images %}
+              <img src="{% static img %}"
+                  data-src="{% static img %}"
+                  alt="{{ lapangan.nama_lapangan }} thumbnail {{ forloop.counter }}"
+                  class="thumbnail rounded-xl h-20 w-28 sm:h-28 sm:w-36 object-cover cursor-pointer shadow-lg border-4 border-white flex-shrink-0 transition-transform duration-150">
+            {% endfor %}
+
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content card -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 sm:p-8 mt-20">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: title, rating, fasilitas, deskripsi -->
+        <div class="lg:col-span-2">
+          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">{{ lapangan.nama_lapangan }}</h1>
+
+          <!-- Rating -->
+          <div class="flex items-center gap-3 mb-4">
+            <div class="flex items-center text-yellow-400 text-lg">
+              {% for i in "12345" %}
+                {% if forloop.counter <= lapangan.rating|floatformat:0 %}
+                  <i class="fas fa-star"></i>
+                {% else %}
+                  <i class="far fa-star"></i>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <div class="text-sm text-gray-600">({{ lapangan.jumlah_ulasan }} ulasan)</div>
+          </div>
+
+          <!-- Fasilitas -->
+          <div class="mb-6">
+            <h3 class="text-md font-semibold text-gray-800 mb-2">Fasilitas</h3>
+            <div class="flex flex-wrap gap-2">
+              {% for f in fasilitas_list %}
+                <span class="bg-[#dfeecd] text-gray-800 text-sm px-3 py-1 rounded-full">{{ f }}</span>
+              {% empty %}
+                <span class="text-gray-500 text-sm">Tidak ada fasilitas terdaftar.</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Deskripsi -->
+          <div class="mb-6">
+            <h3 class="text-md font-semibold text-gray-800 mb-2">Deskripsi</h3>
+            <p class="text-gray-600 text-sm leading-relaxed text-justify">
+              {% if lapangan.deskripsi %}
+                {{ lapangan.deskripsi }}
+              {% else %}
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ornare
+                volutpat turpis ut cursus. Morbi enim massa, dignissim id dictum sit amet,
+                finibus dictum nisi.
+              {% endif %}
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: price + booking -->
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between w-full">
+          <!-- Harga -->
+            <p class="text-2xl font-bold text-primary mt-4">
+                <span class="text-sm">Harga/Jam:</span> Rp {{ lapangan.harga_per_jam|floatformat:0 }}
+            </p>
+          </div>
+
+          <!-- Tombol Booking -->
+          <div class="w-full lg:w-auto">
+            <a href="{% url 'booking:show_booking_page' %}?lapangan_id={{ lapangan.id }}"
+              class="block w-full lg:w-auto text-center lg:text-right px-4 py-2 bg-primary text-white rounded-lg hover:bg-[#4D5833] transition">
+              Booking Sekarang
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const heroImage = document.getElementById('hero-image');
+  const thumbnails = document.querySelectorAll('.thumbnail');
+  const galleryContainer = document.getElementById('thumbnail-container');
+  const prevBtn = document.getElementById('gallery-prev');
+  const nextBtn = document.getElementById('gallery-next');
+
+  // mark first thumbnail active
+  function clearActive() {
+    thumbnails.forEach(t => {
+      t.classList.remove('ring-4', 'ring-[#a7bf6e]', 'scale-105', 'translate-y-0');
+      t.style.transform = '';
+    });
+  }
+
+  if (thumbnails.length > 0) {
+    clearActive();
+    thumbnails[0].classList.add('ring-4', 'ring-[#a7bf6e]', 'scale-105');
+  }
+
+  thumbnails.forEach((thumb) => {
+    thumb.addEventListener('click', () => {
+      const src = thumb.dataset.src || thumb.src;
+      // fade out / in
+      heroImage.classList.add('opacity-0');
+      setTimeout(() => {
+        heroImage.src = src;
+        heroImage.classList.remove('opacity-0');
+      }, 120);
+
+      clearActive();
+      thumb.classList.add('ring-4', 'ring-[#a7bf6e]', 'scale-105');
+      // ensure visible
+      thumb.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+    });
+
+    // keyboard accessibility
+    thumb.setAttribute('tabindex', '0');
+    thumb.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') thumb.click();
+    });
+  });
+
+  // thumbnail scroll buttons (only visible desktop)
+  if (prevBtn && nextBtn && galleryContainer) {
+    prevBtn.addEventListener('click', () => galleryContainer.scrollBy({ left: -280, behavior: 'smooth' }));
+    nextBtn.addEventListener('click', () => galleryContainer.scrollBy({ left: 280, behavior: 'smooth' }));
+  }
+});
+</script>
+{% endblock %}
