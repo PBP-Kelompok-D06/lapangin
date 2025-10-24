@@ -55,6 +55,55 @@ def review_list(request, field_id):
         'show_navbar': True
     })
 
+def review_list_in_gallery(request, field_id):
+    field = get_object_or_404(Field, id=field_id)
+    
+    filter_rating = request.GET.get('filter', 'all')
+    limit = int(request.GET.get('limit', 4)) 
+    
+    reviews = Review.objects.filter(field=field)
+    
+    if filter_rating == 'terbaru':
+        reviews = reviews.order_by('-created_at')
+    elif filter_rating != 'all':
+        try:
+            rating_value = int(filter_rating)
+            if 1 <= rating_value <= 5:
+                reviews = reviews.filter(rating=rating_value).order_by('-created_at')
+            else:
+                reviews = reviews.order_by('-created_at')
+        except ValueError:
+            reviews = reviews.order_by('-created_at')
+    else:
+        reviews = reviews.order_by('-created_at')
+
+    reviews = reviews[:limit] 
+
+    for review in reviews:
+        review.is_owner = review.user.user == request.user
+        review.id = review.id
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        reviews_data = [
+            {
+                "id": review.id,
+                "user": review.user.user.username,
+                "content": review.content,
+                "rating": review.rating,
+                "created_at": review.created_at.strftime("%d %b %Y %H:%M"),
+                "is_owner": review.user.user == request.user
+            }
+            for review in reviews
+        ]
+        
+        return JsonResponse({"reviews": reviews_data})
+
+    return render(request, 'reviews.html', {
+        'reviews': reviews,
+        'field': field,
+        'show_navbar': False
+    })
+
 def review_statistics(request, field_id):
     field = get_object_or_404(Field, id=field_id)
     reviews = Review.objects.filter(field=field)
