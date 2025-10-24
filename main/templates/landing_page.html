@@ -141,28 +141,6 @@
     {% endfor %}
   </div>
 
-  <!-- Navigasi Page -->
-  <div class="flex justify-center items-center mt-8 mb-4 space-x-2">
-    {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}{% if selected_jenis != 'all' %}&jenis={{ selected_jenis }}{% endif %}{% if selected_rating != 'all' %}&rating={{ selected_rating }}{% endif %}"
-        class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&laquo; Prev</a>
-    {% endif %}
-
-    {% for num in page_obj.paginator.page_range %}
-      {% if num == page_obj.number %}
-        <span class="px-3 py-1 bg-[#a7bf6e] text-white rounded">{{ num }}</span>
-      {% else %}
-        <a href="?page={{ num }}{% if selected_jenis != 'all' %}&jenis={{ selected_jenis }}{% endif %}{% if selected_rating != 'all' %}&rating={{ selected_rating }}{% endif %}"
-          class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ num }}</a>
-      {% endif %}
-    {% endfor %}
-
-    {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}{% if selected_jenis != 'all' %}&jenis={{ selected_jenis }}{% endif %}{% if selected_rating != 'all' %}&rating={{ selected_rating }}{% endif %}"
-        class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
-    {% endif %}
-  </div>
-
 
 </section>
 

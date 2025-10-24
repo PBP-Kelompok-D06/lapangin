@@ -87,6 +87,27 @@
 {% include "modal_input.html" %}
 {% include 'toast.html' %}
 
+<div class="flex justify-center items-center mt-8 mb-4 space-x-2">
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if selected_jenis != 'all' %}&jenis={{ selected_jenis }}{% endif %}{% if selected_rating != 'all' %}&rating={{ selected_rating }}{% endif %}"
+      class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">&laquo; Prev</a>
+  {% endif %}
+
+  {% for num in page_obj.paginator.page_range %}
+    {% if num == page_obj.number %}
+      <span class="px-3 py-1 bg-[#a7bf6e] text-white rounded">{{ num }}</span>
+    {% else %}
+      <a href="?page={{ num }}{% if selected_jenis != 'all' %}&jenis={{ selected_jenis }}{% endif %}{% if selected_rating != 'all' %}&rating={{ selected_rating }}{% endif %}"
+        class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if selected_jenis != 'all' %}&jenis={{ selected_jenis }}{% endif %}{% if selected_rating != 'all' %}&rating={{ selected_rating }}{% endif %}"
+      class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next &raquo;</a>
+  {% endif %}
+</div>
+
 
 <script>
 const field_id = "{{ field.id }}";
@@ -114,7 +135,7 @@ fetch(`/review/${field_id}/`, {
             ${r.user.charAt(0).toUpperCase()}
           </div>
           <div class="profile-name">
-            <h1 style="font-family: Montserrat; font-size: 20px; font-weight: 600; color: #212121;">
+            <h1 style=" font-size: 24px; font-weight: 600; color: #212121;">
               ${r.user}
             </h1>
             <p style="font-size: 13px; color: #555;">
@@ -124,7 +145,7 @@ fetch(`/review/${field_id}/`, {
         </div>
 
         <div class="review-content" style="display: flex; width: 100%; flex-direction: column; align-items: flex-start; gap: 32px;">
-          <p style="text-align: justify; font-family: Montserrat; font-size: 20px; color: #212121; font-weight: 500; line-height: 120%; letter-spacing: 0.4px;">
+          <p style="text-align: justify; font-size: 20px; color: #212121; font-weight: 400; line-height: 120%; letter-spacing: 0.4px;">
             ${r.content}
           </p>
           <div class="rating" style="color: #FFD700; font-size: 18px;">
@@ -208,6 +229,8 @@ fetch(`/review/${field_id}/`, {
 
               modal.classList.add('hidden');
               modal.classList.remove('flex');
+              loadRatingStatistics(field_id);
+
             })
             .catch(() => {
               showToast('Gagal', 'Terjadi kesalahan jaringan', 'error');
@@ -240,6 +263,9 @@ fetch(`/review/${field_id}/`, {
         dropdownMenu.style.display = 'none';
 
         modal.style.display = 'flex';
+
+        loadRatingStatistics(field_id);
+
       });
 
       }

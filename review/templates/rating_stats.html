@@ -82,10 +82,8 @@ function loadRatingStatistics(fieldId) {
         document.getElementById('overall-rating').textContent = avgRating.toFixed(1);
         
         const fullStars = Math.floor(avgRating);
-        const hasHalfStar = avgRating % 1 >= 0.5;
         let starsHTML = '★'.repeat(fullStars);
-        if (hasHalfStar) starsHTML += '⯨';
-        starsHTML += '☆'.repeat(5 - fullStars - (hasHalfStar ? 1 : 0));
+        starsHTML += '☆'.repeat(5 - fullStars);
         document.getElementById('overall-stars').innerHTML = starsHTML;
         
         const ratingBars = document.getElementById('rating-bars');
@@ -109,7 +107,7 @@ function loadRatingStatistics(fieldId) {
     })
     .catch(err => console.error('Error loading statistics:', err));
 }
-
+loadRatingStatistics("{{ field.id }}");
 let currentFilter = 'all';
 
 document.querySelectorAll('.filter-chip').forEach(chip => {
@@ -167,7 +165,7 @@ function filterReviews(filter) {
                         ${review.user.charAt(0).toUpperCase()}
                     </div>
                     <div class="profile-name">
-                        <h1 style="font-family: Montserrat; font-size: 20px; font-weight: 600; color: #212121;">
+                        <h1 style=" font-size: 20px; font-weight: 600; color: #212121;">
                             ${review.user}
                         </h1>
                         <p style="font-size: 13px; color: #555;">
@@ -185,7 +183,7 @@ function filterReviews(filter) {
                     ` : ''}
                 </div>
                 <div class="review-content" style="display: flex; width: 100%; flex-direction: column; align-items: flex-start; gap: 32px;">
-                    <p style="text-align: justify; font-family: Montserrat; font-size: 20px; color: #212121; font-weight: 500; line-height: 120%; letter-spacing: 0.4px;">
+                    <p style="text-align: justify; font-size: 20px; color: #212121; font-weight: 400; line-height: 120%; letter-spacing: 0.4px;">
                         ${review.content}
                     </p>
                     <div class="rating" style="color: #FFD700; font-size: 18px;">

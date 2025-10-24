@@ -105,6 +105,7 @@ document.getElementById('form-review').addEventListener('submit', function(e) {
     if (data.success) {
       showToast("Berhasil", mode === "edit" ? "Ulasan diperbarui" : "Ulasan ditambahkan", "success");
       closeModal();
+      loadRatingStatistics(fieldId);
 
       if (mode === 'edit') {
         // Update review yang sudah ada
@@ -114,6 +115,7 @@ document.getElementById('form-review').addEventListener('submit', function(e) {
           reviewContainer.querySelector('.rating').innerHTML =
             "★".repeat(data.updated.rating) + "☆".repeat(5 - data.updated.rating);
         }
+        
       } else {
         addReviewToDOM(data.review);
       }
@@ -146,7 +148,7 @@ function addReviewToDOM(review) {
         ${review.user.charAt(0).toUpperCase()}
       </div>
       <div class="profile-name">
-        <h1 style="font-family: Montserrat; font-size: 20px; font-weight: 600; color: #212121; line-height: 120%;">
+        <h1 style=" font-size: 24px; font-weight: 600; color: #212121; line-height: 120%;">
           ${review.user}
         </h1>
         <p style="font-family: Montserrat; font-size: 13px; font-weight: 400; line-height: 120%; letter-spacing: 0.26px; color: #555;">
@@ -156,7 +158,7 @@ function addReviewToDOM(review) {
     </div>
 
     <div class="review-content" style="display: flex; width: 100%; flex-direction: column; align-items: flex-start; gap: 32px;">
-      <p style="text-align: justify; font-family: Montserrat; font-size: 20px; color: #212121; font-weight: 500; line-height: 120%; letter-spacing: 0.4px;">
+      <p style="text-align: justify; font-size: 20px; color: #212121; font-weight: 400; line-height: 120%; letter-spacing: 0.4px;">
         ${review.content}
       </p>
       <div class="rating" style="color: #FFD700; font-size: 18px;">
@@ -241,6 +243,8 @@ function addReviewToDOM(review) {
           }
           modal.classList.add('hidden');
           modal.classList.remove('flex');
+          loadRatingStatistics(fieldId);
+
         })
         .catch(() => {
           showToast('Gagal', 'Terjadi kesalahan jaringan', 'error');
@@ -272,6 +276,8 @@ function addReviewToDOM(review) {
 
       dropdownMenu.style.display = 'none';
       modal.style.display = 'flex';
+      loadRatingStatistics(fieldId);
+
     });
   }
 

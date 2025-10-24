@@ -45,6 +45,7 @@ def review_list(request, field_id):
             }
             for review in reviews
         ]
+        
 
         return JsonResponse({"reviews": reviews_data})
 
