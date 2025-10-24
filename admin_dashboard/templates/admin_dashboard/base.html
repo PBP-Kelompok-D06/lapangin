@@ -32,18 +32,20 @@
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Navbar - Hanya Dashboard -->
     <nav class="bg-white shadow-md fixed w-full top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
+                <div class="flex items-center space-x-4">
+                    <button id="hamburger-btn" class="p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    
                     <a href="{% url 'admin_dashboard:dashboard_home' %}" class="text-2xl font-bold text-[#4F4F4F]">
                         Lapang.<span class="text-primary">in</span>
                     </a>
                 </div>
                 
                 
-                <!-- User Info & Logout -->
                 <div class="flex items-center space-x-2">
                     <button class="text-gray-600 hover:text-gray-800 px-2 relative">
                         <i class="fas fa-bell text-xl"></i>
@@ -58,7 +60,7 @@
                         <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
                             {{ user.username.0|upper }}
                         </div>
-                        <span class="font-semibold text-gray-700">{{ user.username }}</span>
+                        <span class="font-semibold text-gray-700 hidden sm:inline">{{ user.username }}</span>
                     </div>
                     
                     <a href="{% url 'authbooking:logout' %}" 
@@ -70,62 +72,62 @@
         </div>
     </nav>
 
-    <div class="flex pt-16">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-[#5A6B4A] min-h-screen fixed left-0 text-white">
-            <div class="p-6">
-                <div class="flex items-center space-x-2 mb-8">
+    <aside id="sidebar" class="w-64 bg-[#5A6B4A] h-screen fixed left-0 top-0 text-white z-50 
+                             transform -translate-x-full transition-transform duration-300 ease-in-out">
+        <div class="p-6">
+            <div class="flex items-center justify-between space-x-2 mb-8">
+                <div class="flex items-center space-x-2">
                     <i class="fas fa-cog"></i>
                     <h2 class="text-lg font-semibold">Dashboard</h2>
                 </div>
-                
-                <nav class="space-y-2">
-                    <a href="{% url 'admin_dashboard:dashboard_home' %}" 
-                       class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if request.resolver_match.url_name == 'dashboard_home' %}sidebar-active{% endif %}">
-                        <i class="fas fa-home"></i>
-                        <span>Home</span>
-                    </a>
-                    
-                    <a href="{% url 'admin_dashboard:lapangan_list' %}" 
-                       class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'lapangan' in request.resolver_match.url_name %}sidebar-active{% endif %}">
-                        <i class="fas fa-futbol"></i>
-                        <span>Lapangan</span>
-                    </a>
-                    
-                    <a href="{% url 'admin_dashboard:booking_pending' %}" 
-                       class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'booking' in request.resolver_match.url_name %}sidebar-active{% endif %}">
-                        <i class="fas fa-clock"></i>
-                        <span>Booking Masuk</span>
-                        {% if pending_bookings > 0 %}
-                        <span class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 ml-auto">
-                            {{ pending_bookings }}
-                        </span>
-                        {% endif %}
-                    </a>
-                    
-                    <a href="{% url 'admin_dashboard:transaksi_list' %}" 
-                       class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'transaksi' in request.resolver_match.url_name %}sidebar-active{% endif %}">
-                        <i class="fas fa-history"></i>
-                        <span>Riwayat Transaksi</span>
-                    </a>
-                    
-                    <a href="{% url 'community:admin_community_list' %}" 
-                        class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'community' in request.resolver_match.url_name %}sidebar-active{% endif %}">
-                            <i class="fas fa-users"></i>
-                            <span>Komunitas</span>
-                    </a>
-                    <a href="{% url 'admin_dashboard:booking_sessions_list' %}" 
-                        class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'booking_sessions' in request.resolver_match.url_name %}sidebar-active{% endif %}">
-                            <i class="fas fa-calendar-alt"></i>
-                            <span>Booking Sessions</span>
-                    </a>
-                </nav>
+                <button id="sidebar-close-btn" class="p-2 rounded-md text-white hover:bg-primary">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
-        </aside>
+            
+            <nav class="space-y-2">
+                <a href="{% url 'admin_dashboard:dashboard_home' %}" 
+                   class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if request.resolver_match.url_name == 'dashboard_home' %}sidebar-active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                
+                <a href="{% url 'admin_dashboard:lapangan_list' %}" 
+                   class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'lapangan' in request.resolver_match.url_name %}sidebar-active{% endif %}">
+                    <i class="fas fa-futbol"></i>
+                    <span>Lapangan</span>
+                </a>
+                
+                <a href="{% url 'admin_dashboard:booking_pending' %}" 
+                   class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'booking' in request.resolver_match.url_name %}sidebar-active{% endif %}">
+                    <i class="fas fa-clock"></i>
+                    <span>Booking Masuk</span>
+                    {% if pending_bookings > 0 %}
+                    <span class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 ml-auto">
+                        {{ pending_bookings }}
+                    </span>
+                    {% endif %}
+                </a>
+                
+                <a href="{% url 'admin_dashboard:transaksi_list' %}" 
+                   class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'transaksi' in request.resolver_match.url_name %}sidebar-active{% endif %}">
+                    <i class="fas fa-history"></i>
+                    <span>Riwayat Transaksi</span>
+                </a>
+                
+                <a href="{% url 'community:admin_community_list' %}" 
+                    class="flex items-center space-x-3 p-3 rounded hover:bg-primary transition {% if 'community' in request.resolver_match.url_name %}sidebar-active{% endif %}">
+                        <i class="fas fa-users"></i>
+                        <span>Komunitas</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+    
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
 
-        <!-- Main Content -->
-        <main class="ml-64 flex-1 p-8">
-            {% if messages %}
+
+    <div class="pt-16"> <main class="flex-1 p-8"> {% if messages %}
                 {% for message in messages %}
                 <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
                     {{ message }}
@@ -139,17 +141,14 @@
 
 
 
-    <!-- Toast Messages -->
     {% for message in messages %}
     <div 
             id="toast-component"
             class="fixed bottom-8 right-8 flex items-center gap-4 p-4 px-6 rounded-xl shadow-lg z-50 
                 opacity-0 pointer-events-none transform translate-y-10 transition-all duration-500 ease-in-out"
         >
-            <!-- Icon -->
             <div id="toast-icon" class="text-2xl"></div>
 
-            <!-- Text -->
             <div>
                 <h3 id="toast-title" class="font-semibold text-gray-900">Sample Title</h3>
                 <p id="toast-message" class="text-sm text-gray-700">Sample message here.</p>
@@ -160,5 +159,34 @@
     {% endfor %}
 
     {% block extra_js %}{% endblock %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const closeBtn = document.getElementById('sidebar-close-btn');
+            const overlay = document.getElementById('sidebar-overlay');
+    
+            function openSidebar() {
+                if (sidebar) sidebar.classList.remove('-translate-x-full');
+                if (overlay) overlay.classList.remove('hidden');
+            }
+    
+            function closeSidebar() {
+                if (sidebar) sidebar.classList.add('-translate-x-full');
+                if (overlay) overlay.classList.add('hidden');
+            }
+    
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', openSidebar);
+            }
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeSidebar);
+            }
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+            }
+        });
+    </script>
 </body>
 </html>

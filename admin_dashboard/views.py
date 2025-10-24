@@ -6,6 +6,11 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods  # ✅ TAMBAH
 from django.views.decorators.csrf import csrf_protect  # ✅ TAMBAH
 from django.core.exceptions import PermissionDenied  # ✅ TAMBAH
+from django.templatetags.static import static
+from django.contrib.staticfiles.finders import find
+import os
+from django.core.paginator import Paginator
+
 
 # Import dari BOOKING models (bukan admin_dashboard models)
 from booking.models import Booking, SlotTersedia, Lapangan
@@ -64,28 +69,55 @@ def lapangan_list(request):
     """Menampilkan daftar semua lapangan milik pemilik"""
     jenis_filter = request.GET.get('jenis', '')
     lokasi_filter = request.GET.get('lokasi', '')
-    
-    # Filter hanya lapangan milik pemilik yang login
-    lapangan_list = Lapangan.objects.filter(pengelola=request.user.profile)
-    
+
+    # Filter hanya lapangan milik pemilik yang login dan urutkan berdasarkan PK
+    lapangan_queryset = Lapangan.objects.filter(pengelola=request.user.profile).order_by('pk') # <-- Tambahkan order_by('pk')
+
     if jenis_filter:
-        lapangan_list = lapangan_list.filter(jenis_olahraga=jenis_filter)
+        lapangan_queryset = lapangan_queryset.filter(jenis_olahraga=jenis_filter)
     if lokasi_filter:
-        lapangan_list = lapangan_list.filter(lokasi__icontains=lokasi_filter)
-    
-    # Choices untuk jenis olahraga
+        lapangan_queryset = lapangan_queryset.filter(lokasi__icontains=lokasi_filter)
+
+    # Siapkan list lapangan untuk ditambahkan path gambar statis
+    lapangan_list_with_static = []
+    for lapangan in lapangan_queryset:
+        # ASUMSI: Mencoba mencari gambar statis bernama 'images/lapangan<id>.png' atau 'images/lapangan<id>.jpg'
+        possible_static_path_png = f'images/lapangan{lapangan.pk}.png'
+        possible_static_path_jpg = f'images/lapangan{lapangan.pk}.jpg'
+        
+        # Cek apakah file statis tersebut benar-benar ada
+        found_static_path = None
+        if find(possible_static_path_png): # find() akan mencari di semua folder static
+             found_static_path = possible_static_path_png
+        elif find(possible_static_path_jpg):
+             found_static_path = possible_static_path_jpg
+             
+        # Tambahkan path yang ditemukan (atau None) ke objek
+        lapangan.static_image_path = found_static_path 
+        lapangan_list_with_static.append(lapangan)
+
+    # --- Bagian Paginator (Jika Anda ingin menambahkannya) ---
+    items_per_page = 16 # Atau angka lain
+    paginator = Paginator(lapangan_list_with_static, items_per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    # --------------------------------------------------------
+
     jenis_choices = [
         ('Futsal', 'Futsal'),
         ('Bulutangkis', 'Bulutangkis'),
         ('Basket', 'Basket'),
     ]
-    
+
     context = {
-        'lapangan_list': lapangan_list,
+        # Jika pakai paginator, ganti 'lapangan_list' dengan 'page_obj'
+        'lapangan_list': lapangan_list_with_static, 
+        # 'page_obj': page_obj, # Aktifkan jika pakai paginator
         'jenis_choices': jenis_choices,
         'pending_bookings': get_pending_bookings_count(request.user),
     }
     return render(request, 'admin_dashboard/lapangan_list.html', context)
+    
 
 
 @pemilik_required
@@ -398,25 +430,36 @@ def booking_reject(request, pk):
 
 @pemilik_required
 def transaksi_list(request):
-    """Menampilkan riwayat transaksi (PAID & CANCELLED)"""
     status_filter = request.GET.get('status', '')
-    
-    # Filter transaksi untuk lapangan milik pemilik yang login
-    transaksi = Booking.objects.filter(
-        slot__lapangan__pengelola=request.user.profile
-    ).exclude(
-        status_pembayaran='PENDING'
-    ).select_related('user', 'slot', 'slot__lapangan').order_by('-tanggal_booking')
-    
-    
-    if status_filter and status_filter in ['PAID', 'CANCELLED']:
-        transaksi = transaksi.filter(status_pembayaran=status_filter)
-    
+
+    # 1. Dapatkan SEMUA transaksi yang relevan (mungkin perlu filter per user)
+    # Ganti .all() dengan filter yang sesuai untuk pemilik ini
+    all_transactions_base = Booking.objects.filter(
+        status_pembayaran__in=['PAID', 'CANCELLED']
+        # CONTOH: (sesuaikan dengan model Anda)
+        # slot__lapangan__pemilik=request.user 
+    )
+
+    # 2. Hitung jumlah untuk kartu summary SEBELUM memfilter
+    paid_count = all_transactions_base.filter(status_pembayaran='PAID').count()
+    cancelled_count = all_transactions_base.filter(status_pembayaran='CANCELLED').count()
+
+    # 3. SEKARANG, filter daftar untuk ditampilkan di tabel
+    table_transactions = all_transactions_base
+    if status_filter:
+        table_transactions = table_transactions.filter(status_pembayaran=status_filter)
+
     context = {
-        'transaksi': transaksi,
+        # 'transaksi' sekarang berisi daftar yang sudah difilter untuk tabel
+        'transaksi': table_transactions.order_by('-tanggal_booking'), 
+        
+        # Kirim hasil hitungan ke template
+        'paid_count': paid_count,
+        'cancelled_count': cancelled_count,
+        
         'status_filter': status_filter,
-        'pending_bookings': get_pending_bookings_count(request.user),
     }
+    
     return render(request, 'admin_dashboard/transaksi_list.html', context)
 
 

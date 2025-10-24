@@ -294,22 +294,28 @@ def my_community_requests(request):
 @login_required
 @user_passes_test(is_pemilik)
 def admin_community_list(request):
-    """Daftar komunitas untuk admin"""
+    # Ambil nilai filter dari URL (request.GET)
     jenis_filter = request.GET.get('jenis', '')
     lokasi_filter = request.GET.get('lokasi', '')
-    
-    communities = Community.objects.filter(created_by=request.user).annotate(
-        total_members=Count('members', filter=Q(members__is_active=True))
-    )
-    
+
+    # Mulai dengan semua komunitas
+    community_list = Community.objects.all() 
+
+    # Terapkan filter jika ada
     if jenis_filter:
-        communities = communities.filter(sports_type=jenis_filter)
-    if lokasi_filter:
-        communities = communities.filter(location__icontains=lokasi_filter)
+        community_list = community_list.filter(sports_type=jenis_filter)
     
+    if lokasi_filter:
+        # Gunakan __icontains untuk pencarian yang tidak case-sensitive
+        community_list = community_list.filter(location__icontains=lokasi_filter)
+
+    # Kirim data yang sudah difilter ke template
     context = {
-        'community_list': communities,
+        'community_list': community_list
+        # Kita tidak perlu mengirim 'jenis_filter' dan 'lokasi_filter' 
+        # karena template sudah membacanya dari 'request.GET'
     }
+    
     return render(request, 'admin_community_list.html', context)
 
 
@@ -335,7 +341,7 @@ def admin_community_create(request):
                 community.save()
             
             messages.success(request, 'Komunitas berhasil dibuat!')
-            return redirect('admin_community_list')
+            return redirect('community:admin_community_list')
             
         except Exception as e:
             messages.error(request, f'Terjadi kesalahan: {str(e)}')
@@ -365,7 +371,7 @@ def admin_community_edit(request, pk):
             community.save()
             
             messages.success(request, 'Komunitas berhasil diupdate!')
-            return redirect('admin_community_list')
+            return redirect('community:admin_community_list')
             
         except Exception as e:
             messages.error(request, f'Terjadi kesalahan: {str(e)}')
@@ -383,7 +389,7 @@ def admin_community_delete(request, pk):
     if request.method == 'POST':
         community.delete()
         messages.success(request, 'Komunitas berhasil dihapus!')
-        return redirect('admin_dashboard:dashboard_home')
+        return redirect('community:admin_community_list')
     
     return render(request, 'admin_community_confirm_delete.html', {'community': community})
 
